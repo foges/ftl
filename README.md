@@ -22,6 +22,10 @@ Other classes of interestes are
 
 Simply add `#include <ftl/ftl.h>` to your file.
 
+If you'd like syntax highlighting for `let` in vim, just add the keyword to
+your `c.vim` syntax file. Find the line `syn keyword	cStorageClass` and add
+it.
+
 ### Examples
 
 ``` c++
