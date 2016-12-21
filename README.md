@@ -7,16 +7,24 @@ The goal of this minimal library is to promote functional concepts in C++.
 This library is based around a sequence class and the let keyword.
 
 - `class seq` -- creates an immutable sequence from an iterator, and defines
-methods such as map, map_lazy, filter, filter_lazy, reduce, sorted, etc..
-- `#define let const auto` -- an easy way to promote the use of immutable
-variables and encourage more focus on naming, by decreasing the focus on
-explicitly writing out the type. If you'd prefer this three letter word not
-polluting your workspace, you can comment it out in `include/ftl/flt.h`. The
-library itself does not use the keyword.
+methods such as map, map_lazy, filter, filter_lazy, reduce, sorted, max_element,
+etc..
+- `#define let const auto` -- C++ treats variables as mutable by default, and
+as programmers we have a tendancy to stick to defaults. Behavior can be hard to
+get around, especially if you don't give people an incentive to change. By
+defining `let == const auto`, we give C++ programmers an _easier_ way
+to define variables, while at the same time encouraging immutability.
+In addition, by decreasing the focus on explicitly writing the type name,
+there is more space to focus on writing readable variable names. That being
+said, we understand that not everyone likes immutability (or more probably
+preprocessor hash-defines) forced on them. If you're one of these people you can
+simply comment it out one line in `include/ftl/flt.h`. Don't worry, the library
+itself does not use the let keyword, so you won't break anything (apart from
+tests) by commenting out this line.
 
 Other classes of interestes are
-- `class enumerate` -- enumerates a sequence, similar to pyton's enumerate
-- `class zip` -- zip together a list of sequences, similar to pyton's zip
+- `class enumerate` -- enumerates a sequence, similar to python's enumerate
+- `class zip` -- zip together a list of sequences, similar to python's zip
 
 ### Examples
 
