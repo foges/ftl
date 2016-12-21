@@ -20,11 +20,22 @@ Other classes of interestes are
 
 ### Usage
 
-Simply add `#include <ftl/ftl.h>` to your file.
+This is a header only library. Simply add `#include <ftl/ftl.h>` to your file.
 
 If you'd like syntax highlighting for `let` in vim, just add the keyword to
 your `c.vim` syntax file. Find the line `syn keyword	cStorageClass` and add
 it.
+
+### Tests
+
+To run the tests please install gtest and then run
+
+```
+mkdir -p build && cd build
+cmake -DCMAKE_BUILD_TYPE=Release -DGTEST_PATH=<your-gtest-path> ..
+make -j
+./test_ftl
+```
 
 ### Examples
 
@@ -37,15 +48,14 @@ it.
 int main() {
   let a = std::vector<int>{1, 2, 3};
   let res = ftl::make_seq(a.begin(), a.end())
-      .map_lazy([](let x){ return x * x;})
+      .map_lazy([](let x){ return x * x; })
       .filter_lazy([](let x){ return x > 1; })
-      .reduce(0, [](let acc, let x) { return acc + x;});
+      .reduce(0, [](let acc, let x) { return acc + x; });
   assert(res == 13);
 }
 ```
 
 ### Todo
-- move to gTest
 - add zip.h
 - complete seq
   - .contains
