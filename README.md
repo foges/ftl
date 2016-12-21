@@ -18,6 +18,24 @@ Other classes of interestes are
 - `class enumerate` -- enumerates a sequence, similar to pyton's enumerate
 - `class zip` -- zip together a list of sequences, similar to pyton's zip
 
+### Examples
+
+``` c++
+#include <assert.h>
+#include <vector>
+
+#include <ftl/ftl.h>
+
+int main() {
+  let a = std::vector<int>{1, 2, 3};
+  let res = ftl::make_seq(a.begin(), a.end())
+      .map_lazy([](let x){ return x * x; })
+      .filter_lazy([](let x){ return x > 1; })
+      .reduce(0, [](let acc, let x) { return acc + x; });
+  assert(res == 13);
+}
+```
+
 ### Usage
 
 This is a header only library. Simply add `#include <ftl/ftl.h>` to your file.
@@ -35,24 +53,6 @@ mkdir -p build && cd build
 cmake -DCMAKE_BUILD_TYPE=Release -DGTEST_PATH=<your-gtest-path> ..
 make -j
 ./test_ftl
-```
-
-### Examples
-
-``` c++
-#include <assert.h>
-#include <vector>
-
-#include <ftl/ftl.h>
-
-int main() {
-  let a = std::vector<int>{1, 2, 3};
-  let res = ftl::make_seq(a.begin(), a.end())
-      .map_lazy([](let x){ return x * x; })
-      .filter_lazy([](let x){ return x > 1; })
-      .reduce(0, [](let acc, let x) { return acc + x; });
-  assert(res == 13);
-}
 ```
 
 ### Todo
