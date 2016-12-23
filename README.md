@@ -31,6 +31,9 @@ similar to elixir's unfold.
 
 ### Examples
 
+Take a look at the `examples` folder for some great ways to use ftl. Here is
+one example:
+
 ``` c++
 #include <assert.h>
 #include <vector>
