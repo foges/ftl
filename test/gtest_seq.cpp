@@ -307,6 +307,17 @@ TEST_F(StringTest, SplitToVectorOnComma) {
   EXPECT_EQ(it, split.end());
 }
 
+TEST_F(StringTest, LazySplitToVectorOnComma) {
+  let split = s.split_lazy(',');
+
+  auto it = split.begin();
+  EXPECT_EQ(std::string((*it).data(), (*it).size()), "the quick brown fox");
+  ++it;
+  EXPECT_EQ(std::string((*it).data(), (*it).size()), " jumps over the lazy dog");
+  ++it;
+  EXPECT_EQ(it, split.end());
+}
+
 TEST_F(StringTest, SplitToStringOnWhitespace) {
   let split = s.split<std::string>(' ');
 
@@ -334,6 +345,17 @@ TEST_F(StringTest, SplitToStringOnWhitespace) {
 
 TEST_F(StringTest, SplitToStringOnComma) {
   let split = s.split<std::string>(',');
+
+  auto it = split.begin();
+  EXPECT_EQ(*it, "the quick brown fox");
+  ++it;
+  EXPECT_EQ(*it,  " jumps over the lazy dog");
+  ++it;
+  EXPECT_EQ(it, split.end());
+}
+
+TEST_F(StringTest, LazySplitToStringOnComma) {
+  let split = s.split_lazy<std::string>(',');
 
   auto it = split.begin();
   EXPECT_EQ(*it, "the quick brown fox");

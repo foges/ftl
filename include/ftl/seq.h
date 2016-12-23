@@ -8,7 +8,7 @@
 
 namespace ftl {
 
-template <typename Iter>
+template <typename Iter, typename Data=std::vector<typename Iter::value_type>>
 class seq {
 public:
   using value_type = typename Iter::value_type;
@@ -16,7 +16,7 @@ public:
 
   seq(const Iter begin,
       const Iter end,
-      const std::shared_ptr<const std::vector<typename Iter::value_type>> &data)
+      const std::shared_ptr<const Data> &data)
     : begin_(begin),
       end_(end),
       data_(data) { }
@@ -56,7 +56,7 @@ public:
       Func f_;
     };
 
-    return seq<iterator>(iterator(begin_, f), iterator(end_, f), data_);
+    return seq<iterator, Data>(iterator(begin_, f), iterator(end_, f), data_);
   }
 
   template <typename T, typename Func>
@@ -110,8 +110,8 @@ public:
       Func f_;
     };
 
-    return seq<iterator>(iterator(begin_, end_, f), iterator(end_, end_, f),
-        data_);
+    return seq<iterator, Data>(iterator(begin_, end_, f),
+        iterator(end_, end_, f), data_);
   }
 
   template <typename Func>
@@ -145,11 +145,47 @@ public:
     return seq<typename std::vector<T>::iterator>(res->begin(), res->end(), res);
   }
 
+  template <typename T=std::vector<typename Iter::value_type>>
+  auto split_lazy(const typename Iter::value_type &separator) const {
+    class iterator {
+    public:
+      using value_type = T;
+
+      iterator(Iter it, Iter end, const typename Iter::value_type &separator)
+          : next_it_(it), it_(it), end_(end), separator_(separator) {
+        make_valid_();
+      }
+      auto operator*() const { return T(it_, next_it_); }
+      iterator& operator++() {
+        if (next_it_ != end_) {
+          ++next_it_;
+        }
+        it_ = next_it_;
+        make_valid_();
+        return *this;
+      }
+      bool operator==(const iterator &rhs) const { return it_ == rhs.it_; }
+      bool operator!=(const iterator &rhs) const { return !(*this == rhs); }
+    private:
+      void make_valid_() {
+        while (next_it_ != end_ && *next_it_ != separator_) { ++next_it_; }
+      }
+      Iter next_it_;
+      Iter it_;
+      Iter end_;
+      typename Iter::value_type separator_;
+    };
+
+    return seq<iterator, Data>(
+        iterator(begin_, end_, separator),
+        iterator(end_, end_, separator), data_);
+  }
+
 private:
   Iter begin_;
   Iter end_;
 
-  std::shared_ptr<const std::vector<typename Iter::value_type>> data_;
+  std::shared_ptr<const Data> data_;
 };
 
 template <typename Iter>
