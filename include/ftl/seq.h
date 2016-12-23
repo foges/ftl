@@ -4,6 +4,8 @@
 #include <memory>
 #include <vector>
 
+#include <ftl/utils.h>
+
 namespace ftl {
 
 template <typename Iter>
@@ -14,7 +16,7 @@ public:
 
   seq(const Iter begin,
       const Iter end,
-      const std::shared_ptr<std::vector<typename Iter::value_type>> &data)
+      const std::shared_ptr<const std::vector<typename Iter::value_type>> &data)
     : begin_(begin),
       end_(end),
       data_(data) { }
@@ -120,8 +122,10 @@ public:
     return seq<Iter>(res->begin(), res->end(), res);
   }
 
-  // TODO: enable if operator< exists
-  auto sorted() const {
+  template <typename T=Iter>
+  typename std::enable_if<impl::lt_exists<typename T::value_type>::value,
+                          seq<Iter>>::type
+  sorted() const {
     return sorted([](const auto &x, const auto &y) { return x < y; });
   }
 
@@ -145,8 +149,7 @@ private:
   Iter begin_;
   Iter end_;
 
-  // Add const
-  std::shared_ptr<std::vector<typename Iter::value_type>> data_;
+  std::shared_ptr<const std::vector<typename Iter::value_type>> data_;
 };
 
 template <typename Iter>

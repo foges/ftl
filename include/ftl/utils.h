@@ -1,12 +1,20 @@
 #pragma once
 
-namespace CHECK {
-  struct No {};
-  template<typename T, typename Arg> No operator< (const T&, const Arg&);
+namespace ftl {
+namespace impl {
 
-  template<typename T, typename Arg = T>
-  struct LtExists {
-    enum { value = !std::is_same<decltype(*(T*)(0) < *(Arg*)(0)), No>::value };
+struct nil { };
+
+template <typename T>
+impl::nil operator<(const T&, const T&);
+
+template <typename T>
+struct lt_exists {
+  enum {
+    value = !std::is_same<decltype(*(T*)(0) < *(T*)(0)), nil>::value
   };
-}
+};
+
+}  // namespace impl
+}  // namespace ftl
 

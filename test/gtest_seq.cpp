@@ -236,6 +236,31 @@ TEST_F(SeqStringTest, LazyMapFilterReduce) {
 
 //------------------------------------------------------------------------------
 
+class SeqNoLessThanOpTest : public ::testing::Test {
+public:
+  struct NoLessThanOp { int val; };
+
+  SeqNoLessThanOpTest() : a({{1}, {2}, {3}}), s(a.begin(), a.end()) { }
+
+  const std::vector<NoLessThanOp> a;
+  ftl::seq<typename std::vector<const NoLessThanOp>::iterator> s;
+};
+
+TEST_F(SeqNoLessThanOpTest, Sorted) {
+  let res = s.sorted([](auto x, auto y){ return x.val < y.val; });
+
+  auto it = res.begin();
+  EXPECT_EQ(it->val, 1);
+  ++it;
+  EXPECT_EQ(it->val, 2);
+  ++it;
+  EXPECT_EQ(it->val, 3);
+  ++it;
+  EXPECT_EQ(it, res.end());
+}
+
+//------------------------------------------------------------------------------
+
 class StringTest : public ::testing::Test {
 public:
   StringTest()
@@ -271,7 +296,7 @@ TEST_F(StringTest, SplitToVectorOnWhitespace) {
   EXPECT_EQ(it, split.end());
 }
 
-TEST_F(StringTest, SplitToVectorComma) {
+TEST_F(StringTest, SplitToVectorOnComma) {
   let split = s.split(',');
 
   auto it = split.begin();
@@ -307,7 +332,7 @@ TEST_F(StringTest, SplitToStringOnWhitespace) {
   EXPECT_EQ(it, split.end());
 }
 
-TEST_F(StringTest, SplitToStringComma) {
+TEST_F(StringTest, SplitToStringOnComma) {
   let split = s.split<std::string>(',');
 
   auto it = split.begin();
