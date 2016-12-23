@@ -20,13 +20,15 @@ public:
   const std::vector<std::string> a2;
   const ftl::seq<std::vector<const std::string>::iterator> s2;
 
-  const ftl::zipper<
-    ftl::seq<std::vector<const int>::iterator>> zip_int;
-  const ftl::zipper<
-    ftl::seq<std::vector<const std::string>::iterator>> zip_string;
-  const ftl::zipper<
-    ftl::seq<std::vector<const int>::iterator>,
-    ftl::seq<std::vector<const std::string>::iterator>> zip_int_string;
+  const ftl::seq<
+    ftl::impl::zip_iterator<std::vector<const int>::iterator>> zip_int;
+  const ftl::seq<
+    ftl::impl::zip_iterator<std::vector<const std::string>::iterator>>
+    zip_string;
+  const ftl::seq<
+    ftl::impl::zip_iterator<std::vector<const int>::iterator,
+                            std::vector<const std::string>::iterator>>
+    zip_int_string;
 };
 
 TEST_F(ZipTest, IteratorCorrectness) {

@@ -78,6 +78,15 @@ public:
     return max_el;
   }
 
+  template <typename T=Iter>
+  typename std::enable_if<impl::plus_exists<typename T::value_type>::value,
+                          value_type>::type
+  sum() const {
+    return reduce(value_type(), [](const value_type &acc, const value_type &x){
+        return acc + x;
+    });
+  }
+
   template <typename Func>
   auto filter(Func f) const {
     auto res = std::make_shared<std::vector<value_type>>();

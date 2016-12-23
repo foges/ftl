@@ -2,6 +2,8 @@
 
 #include <utility>
 
+#include <ftl/seq.h>
+
 namespace ftl {
 namespace impl {
 
@@ -65,25 +67,11 @@ private:
 /* WARNING: Undefined behavior if iterator lengths are different.
  */
 template <typename... Seqs>
-class zipper {
-public:
-  using iterator = impl::zip_iterator<typename Seqs::iterator...>;
-
-  zipper(const Seqs&... seqs)
-      : begin_(iterator(std::begin(seqs)...)),
-        end_(iterator(std::end(seqs)...)) { }
-
-  iterator begin() const { return begin_; }
-  iterator end()   const { return end_; }
-
-private:
-  iterator begin_;
-  iterator end_;
-};
-
-template <typename... Seqs>
-auto zip(const Seqs&... seqs) {
-  return zipper<Seqs...>(seqs...);
+seq<impl::zip_iterator<typename Seqs::iterator...>>
+zip(const Seqs&... seqs) {
+  return make_seq(
+      impl::zip_iterator<typename Seqs::iterator...>(std::begin(seqs)...),
+      impl::zip_iterator<typename Seqs::iterator...>(std::end(seqs)...));
 }
 
 }  // namespace ftl

@@ -1,7 +1,8 @@
 #pragma once
 
-#include <ftl/enumeration.h>
+#include <ftl/enumerate.h>
 #include <ftl/seq.h>
+#include <ftl/unfold.h>
 #include <ftl/zip.h>
 
 #define let const auto
