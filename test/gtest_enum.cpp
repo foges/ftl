@@ -17,7 +17,6 @@ public:
   const ftl::seq<std::vector<const int>::iterator> s1;
   const std::vector<std::string> a2;
   const ftl::seq<std::vector<const std::string>::iterator> s2;
-
 };
 
 TEST_F(EnumTest, IteratorCorrectness) {

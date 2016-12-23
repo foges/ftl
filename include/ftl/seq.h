@@ -11,7 +11,6 @@ class seq {
 public:
   using value_type = typename Iter::value_type;
   using iterator = Iter;
-  using const_iterator = const iterator;
 
   seq(const Iter begin,
       const Iter end,
@@ -26,14 +25,12 @@ public:
 
   const Iter begin()  const { return begin_; }
   const Iter end()    const { return end_;   }
-  const Iter cbegin() const { return begin_; }
-  const Iter cend()   const { return end_;   }
 
   template <typename Func>
   auto map(Func f) const {
     auto res = std::make_shared<std::vector<decltype(f(*begin_))>>();
 
-    for (const auto val : *this) {
+    for (const auto &val : *this) {
       res->emplace_back(f(val));
     }
 
@@ -62,7 +59,7 @@ public:
 
   template <typename T, typename Func>
   T reduce(T init, Func f) const {
-    for (const auto val : *this) {
+    for (const auto &val : *this) {
       init = f(init, val);
     }
     return init;
@@ -83,7 +80,7 @@ public:
   auto filter(Func f) const {
     auto res = std::make_shared<std::vector<value_type>>();
 
-    for (const auto val : *this) {
+    for (const auto &val : *this) {
       if (f(val)) {
         res->emplace_back(val);
       }
@@ -128,11 +125,28 @@ public:
     return sorted([](const auto &x, const auto &y) { return x < y; });
   }
 
-private:
-  const Iter begin_;
-  const Iter end_;
+  // TODO Add split on sequence
+  template <typename T=std::vector<typename Iter::value_type>>
+  auto split(const typename Iter::value_type &separator) const {
+    auto res = std::make_shared<std::vector<T>>();
+    Iter last_it = begin_;
+    for (auto it = begin_; it != end_; ++it) {
+      if (*it == separator) {
+        res->emplace_back(last_it, it);
+        last_it = it;
+        ++last_it;
+      }
+    }
+    res->emplace_back(last_it, end_);
+    return seq<typename std::vector<T>::iterator>(res->begin(), res->end(), res);
+  }
 
-  const std::shared_ptr<std::vector<typename Iter::value_type>> data_;
+private:
+  Iter begin_;
+  Iter end_;
+
+  // Add const
+  std::shared_ptr<std::vector<typename Iter::value_type>> data_;
 };
 
 template <typename Iter>

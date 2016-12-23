@@ -64,15 +64,16 @@ make -j
 ```
 
 ### Todo
-- add zip.h
 - complete seq
-  - .contains
+  - .split (for splitting on sequences)
+  - Reduce convenience methods (.contains, ...)
+  - .scan
   - .join
-  - .split
   - .reverseIterators
 - add project euler examples
 - add generators?
   - iota
   - file
   - fib
+- investigate parallelism
 

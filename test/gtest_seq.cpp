@@ -234,3 +234,86 @@ TEST_F(SeqStringTest, LazyMapFilterReduce) {
   EXPECT_EQ(res, "aaaaaacc");
 }
 
+//------------------------------------------------------------------------------
+
+class StringTest : public ::testing::Test {
+public:
+  StringTest()
+    : a("the quick brown fox, jumps over the lazy dog"),
+      s(ftl::make_seq(a.begin(), a.end())) { }
+
+  const std::string a;
+  const ftl::seq<std::string::const_iterator> s;
+};
+
+TEST_F(StringTest, SplitToVectorOnWhitespace) {
+  let split = s.split(' ');
+
+  auto it = split.begin();
+  EXPECT_EQ(std::string(it->data(), it->size()), "the");
+  ++it;
+  EXPECT_EQ(std::string(it->data(), it->size()), "quick");
+  ++it;
+  EXPECT_EQ(std::string(it->data(), it->size()), "brown");
+  ++it;
+  EXPECT_EQ(std::string(it->data(), it->size()), "fox,");
+  ++it;
+  EXPECT_EQ(std::string(it->data(), it->size()), "jumps");
+  ++it;
+  EXPECT_EQ(std::string(it->data(), it->size()), "over");
+  ++it;
+  EXPECT_EQ(std::string(it->data(), it->size()), "the");
+  ++it;
+  EXPECT_EQ(std::string(it->data(), it->size()), "lazy");
+  ++it;
+  EXPECT_EQ(std::string(it->data(), it->size()), "dog");
+  ++it;
+  EXPECT_EQ(it, split.end());
+}
+
+TEST_F(StringTest, SplitToVectorComma) {
+  let split = s.split(',');
+
+  auto it = split.begin();
+  EXPECT_EQ(std::string(it->data(), it->size()), "the quick brown fox");
+  ++it;
+  EXPECT_EQ(std::string(it->data(), it->size()),  " jumps over the lazy dog");
+  ++it;
+  EXPECT_EQ(it, split.end());
+}
+
+TEST_F(StringTest, SplitToStringOnWhitespace) {
+  let split = s.split<std::string>(' ');
+
+  auto it = split.begin();
+  EXPECT_EQ(*it, "the");
+  ++it;
+  EXPECT_EQ(*it, "quick");
+  ++it;
+  EXPECT_EQ(*it, "brown");
+  ++it;
+  EXPECT_EQ(*it, "fox,");
+  ++it;
+  EXPECT_EQ(*it, "jumps");
+  ++it;
+  EXPECT_EQ(*it, "over");
+  ++it;
+  EXPECT_EQ(*it, "the");
+  ++it;
+  EXPECT_EQ(*it, "lazy");
+  ++it;
+  EXPECT_EQ(*it, "dog");
+  ++it;
+  EXPECT_EQ(it, split.end());
+}
+
+TEST_F(StringTest, SplitToStringComma) {
+  let split = s.split<std::string>(',');
+
+  auto it = split.begin();
+  EXPECT_EQ(*it, "the quick brown fox");
+  ++it;
+  EXPECT_EQ(*it,  " jumps over the lazy dog");
+  ++it;
+  EXPECT_EQ(it, split.end());
+}
