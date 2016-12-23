@@ -22,10 +22,6 @@ public:
 
   seq(const Iter begin, const Iter end) : seq(begin, end, nullptr) { }
 
-  // TODO remove both
-  size_t size() const { return std::distance(begin_, end_); }
-  const auto& operator[](size_t idx) const { return begin_[idx]; }
-
   bool empty() const { return begin_ == end_; }
 
   const Iter begin()  const { return begin_; }
@@ -36,7 +32,6 @@ public:
   template <typename Func>
   auto map(Func f) const {
     auto res = std::make_shared<std::vector<decltype(f(*begin_))>>();
-    res->reserve(this->size());
 
     for (const auto val : *this) {
       res->emplace_back(f(val));
