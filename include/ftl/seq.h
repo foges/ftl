@@ -190,6 +190,34 @@ public:
         iterator(end_, end_, separator), data_);
   }
 
+  template <typename Func>
+  auto take_while(const Func &f) {
+    class iterator {
+    public:
+      using value_type = typename seq<Iter>::value_type;
+
+      iterator(Iter it, bool is_end, const Func &f)
+          : it_(it), is_end_(is_end), f_(f) { }
+      auto operator*() const { return *it_; }
+      iterator& operator++() {
+        ++it_;
+        is_end_ = is_end_ || !f_(*it_);
+        return *this;
+      }
+      bool operator==(const iterator &rhs) const {
+        return it_ == rhs.it_ || (is_end_ && rhs.is_end_);
+      }
+      bool operator!=(const iterator &rhs) const { return !(*this == rhs); }
+    private:
+      Iter it_;
+      bool is_end_;
+      Func f_;
+    };
+
+    return seq<iterator, Data>(iterator(begin_, false, f),
+        iterator(end_, true, f), data_);
+  }
+
 private:
   Iter begin_;
   Iter end_;

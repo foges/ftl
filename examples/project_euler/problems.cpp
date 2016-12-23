@@ -3,30 +3,29 @@
 
 #include <ftl/ftl.h>
 
-template <typename T>
-class range {
-public:
-  using value_type = T;
-
-  range(T idx) : idx_(idx) { }
-  auto operator*() const { return idx_; }
-  range& operator++() { ++idx_; return *this; }
-  bool operator==(const range<T> &rhs) const { return idx_ == rhs.idx_; }
-  bool operator!=(const range<T> &rhs) const { return !(*this == rhs); }
-private:
-  T idx_;
-};
-
-template <typename T>
-range<T> make_range(T val) { return range<T>(val); }
-
 // Find the sum of all the multiples of 3 or 5 below 1000.
 int problem1() {
-  return ftl::make_seq(make_range(1), make_range(1000))
-      .filter_lazy([](let x) { return x % 3 == 0 || x % 5 == 0; })
+  return ftl::unfold(0, [](let x){ return x + 1; })
+      .take_while([](let x){ return x < 1000; })
+      .filter_lazy([](let x){ return x % 3 == 0 || x % 5 == 0; })
+      .sum();
+}
+
+// By considering the terms in the Fibonacci sequence whose values do not exceed
+// four million, find the sum of the even-valued terms.
+int problem2() {
+  return ftl::unfold(std::make_tuple(1, 1), [](let x){
+          return ftl::make_optional(
+              std::make_tuple(std::get<1>(x),
+                              std::get<0>(x) + std::get<1>(x)));
+      })
+      .map_lazy([](let x){ return std::get<0>(x); })
+      .take_while([](let x){ return x < 4'000'000; })
+      .filter_lazy([](let x){ return x % 2 == 0; })
       .sum();
 }
 
 int main() {
   std::cout << "Problem 1: " << problem1() << std::endl;
+  std::cout << "Problem 2: " << problem2() << std::endl;
 }

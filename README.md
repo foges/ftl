@@ -8,6 +8,7 @@ This library is based around a sequence class and the let keyword.
 
 - `class seq` -- creates an immutable sequence from an iterator, and defines
 methods such as map, map_lazy, filter, filter_lazy, reduce, sorted, max_element,
+split, split_lazy, and take_while.
 etc..
 - `#define let const auto` -- C++ treats variables as mutable by default, and
 as programmers we have a tendancy to stick to defaults. Behavior can be hard to
@@ -23,8 +24,10 @@ itself does not use the let keyword, so you won't break anything (apart from
 tests) by commenting out this line.
 
 Other classes of interestes are
-- `class enumerate` -- enumerates a sequence, similar to python's enumerate
-- `class zip` -- zip together a list of sequences, similar to python's zip
+- `class enumerate` -- enumerates a sequence, similar to python's enumerate.
+- `class unfold` -- creates a stream of values such that x{n+1} = f(x{n}),
+similar to elixir's unfold.
+- `class zip` -- zip together a list of sequences, similar to python's zip.
 
 ### Examples
 

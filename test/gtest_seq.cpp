@@ -117,6 +117,11 @@ TEST_F(SeqIntTest, LazyMapFilterReduce) {
   EXPECT_EQ(res, 13);
 }
 
+TEST_F(SeqIntTest, TakeWhile) {
+  let res = s.take_while([](let x){ return x < 3; }).sum();
+  EXPECT_EQ(res, 3);
+}
+
 //----------------------------------------------------------------------------//
 
 class SeqStringTest : public ::testing::Test {
@@ -234,19 +239,24 @@ TEST_F(SeqStringTest, LazyMapFilterReduce) {
   EXPECT_EQ(res, "aaaaaacc");
 }
 
+TEST_F(SeqStringTest, TakeWhile) {
+  let res = s.take_while([](let x){ return x.size() > 1; }).sum();
+  EXPECT_EQ(res, "aaabb");
+}
+
 //------------------------------------------------------------------------------
 
-class SeqNoLessThanOpTest : public ::testing::Test {
+class SeqNoOpsTest : public ::testing::Test {
 public:
-  struct NoLessThanOp { int val; };
+  struct NoOps { int val; };
 
-  SeqNoLessThanOpTest() : a({{1}, {2}, {3}}), s(a.begin(), a.end()) { }
+  SeqNoOpsTest() : a({{1}, {2}, {3}}), s(a.begin(), a.end()) { }
 
-  const std::vector<NoLessThanOp> a;
-  ftl::seq<typename std::vector<const NoLessThanOp>::iterator> s;
+  const std::vector<NoOps> a;
+  ftl::seq<typename std::vector<const NoOps>::iterator> s;
 };
 
-TEST_F(SeqNoLessThanOpTest, Sorted) {
+TEST_F(SeqNoOpsTest, Sorted) {
   let res = s.sorted([](auto x, auto y){ return x.val < y.val; });
 
   auto it = res.begin();
