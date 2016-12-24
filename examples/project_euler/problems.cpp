@@ -15,9 +15,8 @@ int problem1() {
 // four million, find the sum of the even-valued terms.
 int problem2() {
   return ftl::unfold(std::make_tuple(1, 1), [](let x){
-          return ftl::make_optional(
-              std::make_tuple(std::get<1>(x),
-                              std::get<0>(x) + std::get<1>(x)));
+          return std::make_tuple(std::get<1>(x),
+                                 std::get<0>(x) + std::get<1>(x));
       })
       .map_lazy([](let x){ return std::get<0>(x); })
       .take_while([](let x){ return x < 4'000'000; })
