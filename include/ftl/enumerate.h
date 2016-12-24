@@ -22,11 +22,11 @@ public:
     return *this;
   }
 
-  bool operator==(const enum_iterator<Iter> &rhs) const {
+  bool operator==(const enum_iterator &rhs) const {
     return it_ == rhs.it_;
   }
 
-  bool operator!=(const enum_iterator<Iter> &rhs) const {
+  bool operator!=(const enum_iterator &rhs) const {
     return !(*this == rhs);
   }
 

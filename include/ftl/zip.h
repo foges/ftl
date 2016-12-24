@@ -44,12 +44,12 @@ private:
 template <typename Iter>
 class zip_iterator<Iter> {
 public:
-  using value_type = std::tuple<Iter>;
+  using value_type = std::tuple<const typename Iter::value_type&>;
 
   zip_iterator(const Iter &head) : head_(head) { }
 
-  const std::tuple<const typename Iter::value_type&> operator*() const {
-    return std::tuple<const typename Iter::value_type&>(*head_);
+  value_type operator*() const {
+    return value_type(*head_);
   }
 
   zip_iterator& operator++() { ++head_; return *this; }
