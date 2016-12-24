@@ -42,5 +42,11 @@ auto unfold(const T &acc, const Func &f) {
       impl::unfold_iterator<T, Func>(optional<T>(), f));
 }
 
+// Convenience methods
+template <typename T>
+auto iota(const T& begin) {
+  return unfold(begin, [](const auto x){ return x + static_cast<T>(1); });
+}
+
 }  // namespace flt
 

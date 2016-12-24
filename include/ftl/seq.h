@@ -225,11 +225,26 @@ public:
 
   template <typename Func>
   auto take_while(const Func &f) {
-
     return seq<impl::take_while_iterator<Iter, Func>, Data>(
         impl::take_while_iterator<Iter, Func>(begin_, false, f),
         impl::take_while_iterator<Iter, Func>(end_, true, f), data_);
   }
+
+  auto head() const {
+    return *begin_;
+  }
+
+  auto tail() const {
+    for (auto it = begin_;;) {
+      const auto val = *it;
+      ++it;
+      if (it == end_) {
+          return val;
+      }
+    }
+    return *end_;
+  }
+
 
 private:
   Iter begin_;

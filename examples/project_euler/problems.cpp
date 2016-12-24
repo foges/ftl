@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <algorithm>
 #include <iostream>
 
@@ -5,7 +6,7 @@
 
 // Find the sum of all the multiples of 3 or 5 below 1000.
 int problem1() {
-  return ftl::unfold(0, [](let x){ return x + 1; })
+  return ftl::iota(0)
       .take_while([](let x){ return x < 1000; })
       .filter_lazy([](let x){ return x % 3 == 0 || x % 5 == 0; })
       .sum();
@@ -24,7 +25,31 @@ int problem2() {
       .sum();
 }
 
+// What is the largest prime factor of the number 600851475143>
+uint64_t smallest_prime_factor(int64_t num) {
+  if (num < 2) {
+    exit(EXIT_FAILURE);
+  }
+  return ftl::iota(2llu)
+      .filter_lazy([num](let p){ return (num % p) == 0; })
+      .head();
+}
+
+uint64_t largest_prime_factor(uint64_t num) {
+  let p = smallest_prime_factor(num);
+  if (p == num) {
+    return p;
+  } else {
+    return largest_prime_factor(num / p);
+  }
+}
+
+uint64_t problem3() {
+  return largest_prime_factor(600851475143llu);
+}
+
 int main() {
   std::cout << "Problem 1: " << problem1() << std::endl;
   std::cout << "Problem 2: " << problem2() << std::endl;
+  std::cout << "Problem 3: " << problem3() << std::endl;
 }
