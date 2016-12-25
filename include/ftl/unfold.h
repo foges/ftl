@@ -44,8 +44,20 @@ auto unfold(const T &acc, const Func &f) {
 
 // Convenience methods
 template <typename T>
-auto iota(const T& begin) {
-  return unfold(begin, [](const auto x){ return x + static_cast<T>(1); });
+auto iota(const T& begin, const T& incr=T(1)) {
+  return unfold(begin, [incr](const auto x){ return x + incr; });
+}
+
+template <typename T>
+auto range(const T& begin, const T& end, const T& incr=T(1)) {
+  return unfold(begin, [incr, end](const auto x){
+    return x + incr < end ? optional<T>(x + incr) : optional<T>();
+  });
+}
+
+template <typename T>
+auto range(const T& end) {
+  return range(T(0), end);
 }
 
 }  // namespace flt

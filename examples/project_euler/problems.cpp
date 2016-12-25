@@ -6,8 +6,7 @@
 
 // Find the sum of all the multiples of 3 or 5 below 1000.
 int problem1() {
-  return ftl::iota(0)
-      .take_while([](let x){ return x < 1000; })
+  return ftl::range(1000)
       .filter_lazy([](let x){ return x % 3 == 0 || x % 5 == 0; })
       .sum();
 }
@@ -41,8 +40,19 @@ uint64_t problem3() {
   return largest_prime_factor(600851475143llu);
 }
 
+// Find the difference between the sum of the squares of the first one hundred
+// natural numbers and the square of the sum.
+uint64_t problem6() {
+  let n = 100;
+  let square = [](let x){ return x * x; };
+  let sum_squares = ftl::range(1, n + 1).map_lazy(square).sum();
+  let square_sum = square(ftl::range(1, n + 1).sum());
+  return square_sum - sum_squares;
+}
+
 int main() {
   std::cout << "Problem 1: " << problem1() << std::endl;
   std::cout << "Problem 2: " << problem2() << std::endl;
   std::cout << "Problem 3: " << problem3() << std::endl;
+  std::cout << "Problem 6: " << problem6() << std::endl;
 }
