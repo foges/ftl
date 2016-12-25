@@ -27,9 +27,6 @@ int problem2() {
 
 // What is the largest prime factor of the number 600851475143>
 uint64_t smallest_prime_factor(int64_t num) {
-  if (num < 2) {
-    exit(EXIT_FAILURE);
-  }
   return ftl::iota(2llu)
       .filter_lazy([num](let p){ return (num % p) == 0; })
       .head();
@@ -37,11 +34,7 @@ uint64_t smallest_prime_factor(int64_t num) {
 
 uint64_t largest_prime_factor(uint64_t num) {
   let p = smallest_prime_factor(num);
-  if (p == num) {
-    return p;
-  } else {
-    return largest_prime_factor(num / p);
-  }
+  return p == num ? p : largest_prime_factor(num / p);
 }
 
 uint64_t problem3() {

@@ -71,15 +71,9 @@ make -j
 
 ### Todo
 - complete seq
-  - .split (for splitting on sequences)
-  - Reduce convenience methods (.contains, ...)
+  - .reduce convenience methods (.contains, ...)
   - .scan
-  - .join
   - .reverseIterators
-- add project euler examples
-- add generators?
-  - iota
-  - file
-  - fib
+- file to seq
 - investigate parallelism
 
