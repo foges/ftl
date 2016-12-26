@@ -4,8 +4,6 @@
 namespace ftl {
 namespace impl {
 
-typedef std::tuple<int, char, char> key_t;
-
 template <int N, typename... Args>
 struct tuple_hash : public std::unary_function<std::tuple< Args...>, size_t> {
   size_t operator()(const std::tuple<Args...>& key) const {

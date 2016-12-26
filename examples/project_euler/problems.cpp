@@ -132,15 +132,19 @@ uint64_t problem23() {
 }
 
 template <typename Func>
-void run(int num, const Func &f) {
+void do_run(const std::string &name, const Func &f) {
   uint64_t t_start = timestamp_ms();
   let res = f();
   uint64_t t_stop = timestamp_ms();
-  std::cout << "Problem " << std::setw(3) << num << " | "
-            << std::setw(10) << res << " | "
+  std::cout << std::setw(10) << std::left << name << " | "
+            << std::setw(10) << std::right << res << " | "
             << std::setw(5) << t_stop - t_start << "ms"
             << std::endl;
 }
+
+#define STRINGIFY(x) #x
+#define TOSTRING(x)  STRINGIFY(x)
+#define RUN(f) do_run(TOSTRING(f), (f))
 
 int main() {
   const char* spacing = "----------------------------------";
@@ -149,13 +153,13 @@ int main() {
             << "| Project Euler examples         |" << std::endl
             << spacing << std::endl;
 
-  run(1,  problem1);
-  run(2,  problem2);
-  run(3,  problem3);
-  run(6,  problem6);
-  run(12, problem12);
-  run(14, problem14);
-  run(23, problem23);
+  RUN(problem1);
+  RUN(problem2);
+  RUN(problem3);
+  RUN(problem6);
+  RUN(problem12);
+  RUN(problem14);
+  RUN(problem23);
 
   std::cout << spacing << std::endl;
 }
