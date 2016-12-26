@@ -25,6 +25,14 @@ struct plus_exists {
   };
 };
 
+template <typename T>
+struct bool_exists {
+  enum {
+    value = std::is_constructible<T, bool>::value
+  };
+};
+
+
 
 }  // namespace impl
 }  // namespace ftl

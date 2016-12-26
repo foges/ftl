@@ -124,7 +124,6 @@ public:
   template <typename Func>
   auto map(Func f) const {
     auto res = std::make_shared<std::vector<decltype(f(*begin_))>>();
-
     for (const auto &val : *this) {
       res->emplace_back(f(val));
     }
@@ -158,12 +157,11 @@ public:
     return max_el;
   }
 
-  template <typename T=Iter>
-  typename std::enable_if<impl::plus_exists<typename T::value_type>::value,
-                          value_type>::type
+  template <typename T=typename Iter::value_type>
+  typename std::enable_if<impl::plus_exists<T>::value, T>::type
   sum() const {
-    return reduce(value_type(), [](const value_type &acc, const value_type &x){
-        return acc + x;
+    return reduce(T(), [](const T &acc, const value_type &x){
+        return acc + static_cast<T>(x);
     });
   }
 
@@ -245,6 +243,22 @@ public:
     return *end_;
   }
 
+  template <typename T=typename Iter::value_type>
+  typename std::enable_if<impl::bool_exists<T>::value, bool>::type
+  any() const {
+    for (const auto &val : *this) {
+      if (static_cast<T>(val)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  template <typename T=typename Iter::value_type>
+  typename std::enable_if<impl::bool_exists<T>::value, bool>::type
+  all() const {
+    return !this->any();
+  }
 
 private:
   Iter begin_;
