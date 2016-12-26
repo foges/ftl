@@ -243,11 +243,10 @@ public:
     return *end_;
   }
 
-  template <typename T=typename Iter::value_type>
-  typename std::enable_if<impl::bool_exists<T>::value, bool>::type
-  any() const {
+  template <typename Func>
+  bool any(const Func &f) const {
     for (const auto &val : *this) {
-      if (static_cast<T>(val)) {
+      if (f(val)) {
         return true;
       }
     }
@@ -256,8 +255,24 @@ public:
 
   template <typename T=typename Iter::value_type>
   typename std::enable_if<impl::bool_exists<T>::value, bool>::type
+  any() const {
+    return any([](const auto &x) { return static_cast<bool>(x); });
+  }
+
+  template <typename Func>
+  bool all(const Func &f) const {
+    for (const auto &val : *this) {
+      if (!f(val)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  template <typename T=typename Iter::value_type>
+  typename std::enable_if<impl::bool_exists<T>::value, bool>::type
   all() const {
-    return !this->any();
+    return all([](const auto &x) { return static_cast<bool>(x); });
   }
 
 private:

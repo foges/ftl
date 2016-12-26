@@ -122,6 +122,36 @@ TEST_F(SeqIntTest, TakeWhile) {
   EXPECT_EQ(res, 3);
 }
 
+TEST_F(SeqIntTest, Tail) {
+  let res = s.tail();
+  EXPECT_EQ(res, 3);
+}
+
+TEST_F(SeqIntTest, Head) {
+  let res = s.head();
+  EXPECT_EQ(res, 1);
+}
+
+TEST_F(SeqIntTest, AnyTrue) {
+  let res = s.map([](let x){ return x == 2; }).any();
+  EXPECT_EQ(res, true);
+}
+
+TEST_F(SeqIntTest, AnyFalse) {
+  let res = s.map([](let x){ return x == 4; }).any();
+  EXPECT_EQ(res, false);
+}
+
+TEST_F(SeqIntTest, AllTrue) {
+  let res = s.map([](let x){ return x > 0; }).all();
+  EXPECT_EQ(res, true);
+}
+
+TEST_F(SeqIntTest, AllFalse) {
+  let res = s.map([](let x){ return x == 2; }).all();
+  EXPECT_EQ(res, false);
+}
+
 //----------------------------------------------------------------------------//
 
 class SeqStringTest : public ::testing::Test {
@@ -242,6 +272,36 @@ TEST_F(SeqStringTest, LazyMapFilterReduce) {
 TEST_F(SeqStringTest, TakeWhile) {
   let res = s.take_while([](let x){ return x.size() > 1; }).sum();
   EXPECT_EQ(res, "aaabb");
+}
+
+TEST_F(SeqStringTest, Tail) {
+  let res = s.tail();
+  EXPECT_EQ(res, "c");
+}
+
+TEST_F(SeqStringTest, Head) {
+  let res = s.head();
+  EXPECT_EQ(res, "aaa");
+}
+
+TEST_F(SeqStringTest, AnyTrue) {
+  let res = s.map([](let x){ return x == "bb"; }).any();
+  EXPECT_EQ(res, true);
+}
+
+TEST_F(SeqStringTest, AnyFalse) {
+  let res = s.map([](let x){ return x == "ccc"; }).any();
+  EXPECT_EQ(res, false);
+}
+
+TEST_F(SeqStringTest, AllTrue) {
+  let res = s.map([](let x){ return x.size() > 0; }).all();
+  EXPECT_EQ(res, true);
+}
+
+TEST_F(SeqStringTest, AllFalse) {
+  let res = s.map([](let x){ return x == "aaa"; }).all();
+  EXPECT_EQ(res, false);
 }
 
 //------------------------------------------------------------------------------
