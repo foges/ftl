@@ -60,15 +60,15 @@ uint64_t problem6() {
 // divisors?
 uint64_t problem12() {
   let num_divisors = [](let n) {
-      let sqrtn = static_cast<uint64_t>(std::sqrt(n + 0.99));
-      return ftl::range(1llu, sqrtn)
+      let sqrtn = static_cast<int>(std::sqrt(n + 0.99));
+      return ftl::range(1, sqrtn)
           .filter_lazy([n](let i) { return n % i == 0; })
-          .map_lazy([](let _) { return 1llu; })
+          .map_lazy([](let _) { return 1; })
           .sum() * 2 + (sqrtn * sqrtn == 1 ? 1 : 0);
   };
-  return ftl::iota(1llu)
+  return ftl::iota(1)
      .map_lazy([](let x) { return x * (x + 1) / 2; })
-     .filter_lazy([&num_divisors](let x){ return num_divisors(x) > 500llu; })
+     .filter_lazy([&num_divisors](let x){ return num_divisors(x) > 500; })
      .head();
 }
 
