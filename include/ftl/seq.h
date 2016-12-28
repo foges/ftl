@@ -4,6 +4,7 @@
 #include <memory>
 #include <vector>
 
+#include <ftl/optional.h>
 #include <ftl/utils.h>
 
 namespace ftl {
@@ -99,6 +100,29 @@ private:
   Func f_;
 };
 
+template <typename Iter>
+class take_iterator {
+public:
+  using value_type = typename Iter::value_type;
+
+  take_iterator(Iter it, size_t idx) : it_(it), idx_(idx) { }
+  auto operator*() const { return *it_; }
+  take_iterator& operator++() {
+    ++it_; ++idx_;
+    return *this;
+  }
+  bool operator==(const take_iterator &rhs) const {
+    return it_ == rhs.it_ || idx_ == rhs.idx_;
+  }
+  bool operator!=(const take_iterator &rhs) const {
+    return !(*this == rhs);
+  }
+private:
+  Iter it_;
+  size_t idx_;
+};
+
+
 }  // namespace impl
 
 template <typename Iter, typename Data=std::vector<typename Iter::value_type>>
@@ -121,18 +145,17 @@ public:
   const Iter begin()  const { return begin_; }
   const Iter end()    const { return end_;   }
 
-  template <typename Func>
-  auto map(Func f) const {
-    auto res = std::make_shared<std::vector<decltype(f(*begin_))>>();
+  auto eval() {
+    auto res = std::make_shared<std::vector<decltype(*begin_)>>();
     for (const auto &val : *this) {
-      res->emplace_back(f(val));
+      res->emplace_back(val);
     }
 
     return seq<decltype(res->begin())>(res->begin(), res->end(), res);
   }
 
   template <typename Func>
-  auto map_lazy(Func f) const {
+  auto map(Func f) const {
     return seq<impl::map_iterator<Iter, Func>, Data>(
         impl::map_iterator<Iter, Func>(begin_, f),
         impl::map_iterator<Iter, Func>(end_, f), data_);
@@ -157,6 +180,16 @@ public:
     return max_el;
   }
 
+  template <typename Func>
+  ftl::optional<value_type> max(Func cmp) const {
+    const auto max_el = max_element(cmp);
+    if (max_el == end_) {
+      return ftl::optional<value_type>();
+    } else {
+      return *max_el;
+    }
+  }
+
   template <typename T=typename Iter::value_type>
   typename std::enable_if<impl::plus_exists<T>::value, T>::type
   sum() const {
@@ -167,18 +200,6 @@ public:
 
   template <typename Func>
   auto filter(Func f) const {
-    auto res = std::make_shared<std::vector<value_type>>();
-
-    for (const auto &val : *this) {
-      if (f(val)) {
-        res->emplace_back(val);
-      }
-    }
-    return seq<decltype(res->begin())>(res->begin(), res->end(), res);
-  }
-
-  template <typename Func>
-  auto filter_lazy(Func f) const {
     return seq<impl::filter_iterator<Iter, Func>, Data>(
         impl::filter_iterator<Iter, Func>(begin_, end_, f),
         impl::filter_iterator<Iter, Func>(end_, end_, f), data_);
@@ -199,23 +220,8 @@ public:
     return sorted([](const auto &x, const auto &y) { return x < y; });
   }
 
-  template <typename T=std::vector<typename Iter::value_type>>
-  auto split(const typename Iter::value_type &separator) const {
-    auto res = std::make_shared<std::vector<T>>();
-    Iter last_it = begin_;
-    for (auto it = begin_; it != end_; ++it) {
-      if (*it == separator) {
-        res->emplace_back(last_it, it);
-        last_it = it;
-        ++last_it;
-      }
-    }
-    res->emplace_back(last_it, end_);
-    return seq<typename std::vector<T>::iterator>(res->begin(), res->end(), res);
-  }
-
   template <typename Res=std::vector<typename Iter::value_type>>
-  auto split_lazy(const typename Iter::value_type &separator) const {
+  auto split(const typename Iter::value_type &separator) const {
     return seq<impl::split_iterator<Iter, Res>, Data>(
         impl::split_iterator<Iter, Res>(begin_, end_, separator),
         impl::split_iterator<Iter, Res>(end_, end_, separator), data_);
@@ -228,11 +234,21 @@ public:
         impl::take_while_iterator<Iter, Func>(end_, true, f), data_);
   }
 
-  auto head() const {
-    return *begin_;
+  auto take(size_t num) {
+    return seq<impl::take_iterator<Iter>, Data>(
+        impl::take_iterator<Iter>(begin_, 0),
+        impl::take_iterator<Iter>(end_, num), data_);
   }
 
-  auto tail() const {
+  ftl::optional<value_type> head() const {
+    if (!empty()) {
+      return *begin_;
+    } else {
+      return ftl::optional<value_type>();
+    }
+  }
+
+  ftl::optional<value_type> tail() const {
     for (auto it = begin_;;) {
       Iter last_it(it);
       ++it;
@@ -240,7 +256,7 @@ public:
           return *last_it;
       }
     }
-    return *end_;
+    return ftl::optional<value_type>();
   }
 
   template <typename Func>

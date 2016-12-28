@@ -10,10 +10,38 @@
 
 #include "timestamp.h"
 
+// -----------------------------------------------------------------------------
+// -- Helper Functions
+// -----------------------------------------------------------------------------
+template <typename T>
+T sqrt_int(T num) {
+  return static_cast<T>(std::sqrt(num + 0.99));
+}
+
+uint64_t smallest_prime_factor(uint64_t num) {
+  return ftl::range(2llu, sqrt_int(num) + 1)
+      .filter([num](let p){ return (num % p) == 0; })
+      .head()
+      .value_or(num);
+}
+
+uint64_t largest_prime_factor(uint64_t num) {
+  let p = smallest_prime_factor(num);
+  return p == num ? p : largest_prime_factor(num / p);
+}
+
+
+uint64_t is_prime(uint64_t num) {
+  return num == smallest_prime_factor(num);
+};
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+
 // Find the sum of all the multiples of 3 or 5 below 1000.
 int problem1() {
   return ftl::range(1000)
-      .filter_lazy([](let x){ return x % 3 == 0 || x % 5 == 0; })
+      .filter([](let x){ return x % 3 == 0 || x % 5 == 0; })
       .sum();
 }
 
@@ -24,24 +52,13 @@ int problem2() {
           return std::make_tuple(std::get<1>(x),
                                  std::get<0>(x) + std::get<1>(x));
       })
-      .map_lazy([](let x){ return std::get<0>(x); })
+      .map([](let x){ return std::get<0>(x); })
       .take_while([](let x){ return x < 4'000'000; })
-      .filter_lazy([](let x){ return x % 2 == 0; })
+      .filter([](let x){ return x % 2 == 0; })
       .sum();
 }
 
-// What is the largest prime factor of the number 600851475143>
-uint64_t smallest_prime_factor(int64_t num) {
-  return ftl::iota(2llu)
-      .filter_lazy([num](let p){ return (num % p) == 0; })
-      .head();
-}
-
-uint64_t largest_prime_factor(uint64_t num) {
-  let p = smallest_prime_factor(num);
-  return p == num ? p : largest_prime_factor(num / p);
-}
-
+// What is the largest prime factor of the number 600851475143
 uint64_t problem3() {
   return largest_prime_factor(600851475143llu);
 }
@@ -51,28 +68,35 @@ uint64_t problem3() {
 uint64_t problem6() {
   let n = 100;
   let square = [](let x){ return x * x; };
-  let sum_squares = ftl::range(1, n + 1).map_lazy(square).sum();
+  let sum_squares = ftl::range(1, n + 1).map(square).sum();
   let square_sum = square(ftl::range(1, n + 1).sum());
   return square_sum - sum_squares;
 }
 
-// What is the 10 001st prime number?
+// What is the 10'001st prime number?
+uint64_t problem7() {
+  return ftl::iota(2llu).filter(is_prime).take(10'001).tail().value();
+}
 
+// Find the sum of all the primes below two million.
+uint64_t problem10() {
+  return ftl::range(2, 2'000'000).filter(is_prime).sum<uint64_t>();
+}
 
 // What is the value of the first triangle number to have over five hundred
 // divisors?
 uint64_t problem12() {
   let num_divisors = [](let n) {
-      let sqrtn = static_cast<int>(std::sqrt(n + 0.99));
+      let sqrtn = sqrt_int(n);
       return ftl::range(1, sqrtn)
-          .filter_lazy([n](let i) { return n % i == 0; })
-          .map_lazy([](let _) { return 1; })
+          .filter([n](let i) { return n % i == 0; })
+          .map([](let _) { return 1; })
           .sum() * 2 + (sqrtn * sqrtn == 1 ? 1 : 0);
   };
   return ftl::iota(1)
-     .map_lazy([](let x) { return x * (x + 1) / 2; })
-     .filter_lazy([&num_divisors](let x){ return num_divisors(x) > 500; })
-     .head();
+     .map([](let x) { return x * (x + 1) / 2; })
+     .filter([&num_divisors](let x){ return num_divisors(x) > 500; })
+     .head().value();
 }
 
 uint64_t problem14() {
@@ -87,11 +111,11 @@ uint64_t problem14() {
               return ftl::make_optional(3 * i + 1);
             }
         })
-        .map_lazy([](let _){ return 1; })
+        .map([](let _){ return 1; })
         .sum();
   };
   return std::get<0>(ftl::range(1llu, 1'000'000llu)
-      .map_lazy([chain_length](let i){
+      .map([chain_length](let i){
         return std::make_tuple(i, chain_length(i));
       })
       .reduce(std::make_tuple(0llu, 0), [](let acc, let val){
@@ -109,10 +133,10 @@ uint64_t problem23() {
   let max_num = 28123;
 
   let is_abundant_impl = [](let n){
-      let sqrtn = static_cast<int>(std::sqrt(n + 0.99));
+      let sqrtn = sqrt_int(n);
       let sum_divisors = ftl::range(1, sqrtn + 1)
-          .filter_lazy([n](let i){ return n % i == 0; })
-          .map_lazy([n](let i){ return i == 1 || i * i == n ? i : i + n / i; })
+          .filter([n](let i){ return n % i == 0; })
+          .map([n](let i){ return i == 1 || i * i == n ? i : i + n / i; })
           .sum();
       return sum_divisors > n;
   };
@@ -120,17 +144,17 @@ uint64_t problem23() {
   let is_abundant = ftl::memoize<decltype(is_abundant_impl), int>(
       is_abundant_impl);
 
-  let abundants = ftl::range(1, max_num + 1).filter(is_abundant);
+  let abundants = ftl::range(1, max_num + 1).filter(is_abundant).eval();
 
   let is_sum_abundants = [&is_abundant, &abundants](let n){
       return abundants
-          .filter_lazy([n](let k){ return k < n; })
-          .filter_lazy([n, &is_abundant](let k){ return is_abundant(n - k); })
+          .filter([n](let k){ return k < n; })
+          .filter([n, &is_abundant](let k){ return is_abundant(n - k); })
           .any();
   };
 
   return ftl::range(1, max_num + 1)
-      .filter_lazy([&is_sum_abundants](let i){ return !is_sum_abundants(i); })
+      .filter([&is_sum_abundants](let i){ return !is_sum_abundants(i); })
       .sum();
 }
 
@@ -139,9 +163,11 @@ void do_run(const std::string &name, const Func &f) {
   uint64_t t_start = timestamp_ms();
   let res = f();
   uint64_t t_stop = timestamp_ms();
-  std::cout << std::setw(10) << std::left << name << " | "
-            << std::setw(10) << std::right << res << " | "
+  std::cout << "| "
+            << std::setw(10) << std::left << name << " | "
+            << std::setw(12) << std::right << res << " | "
             << std::setw(5) << t_stop - t_start << "ms"
+            << " |"
             << std::endl;
 }
 
@@ -150,16 +176,19 @@ void do_run(const std::string &name, const Func &f) {
 #define RUN(f) do_run(TOSTRING(f), (f))
 
 int main() {
-  const char* spacing = "----------------------------------";
+  const char* spacing = "---------------------------------------";
+  const char* title =   "| Project Euler examples              |";
 
   std::cout << spacing << std::endl
-            << "| Project Euler examples         |" << std::endl
+            << title << std::endl
             << spacing << std::endl;
 
   RUN(problem1);
   RUN(problem2);
   RUN(problem3);
   RUN(problem6);
+  RUN(problem7);
+  RUN(problem10);
   RUN(problem12);
   RUN(problem14);
   RUN(problem23);

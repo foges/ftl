@@ -13,7 +13,7 @@ public:
 };
 
 TEST_F(SeqIntTest, Map) {
-  let res = s.map([](let x){ return x * x;});
+  let res = s.map([](let x){ return x * x;}).eval();
 
   auto it  = res.begin();
   EXPECT_EQ(*it, 1);
@@ -32,12 +32,13 @@ TEST_F(SeqIntTest, Reduce) {
 
 TEST_F(SeqIntTest, MapReduce) {
   let res = s.map([](let x){ return x * x;})
+      .eval()
       .reduce(0, [](let acc, let x) { return acc + x;});
   EXPECT_EQ(res, 14);
 }
 
 TEST_F(SeqIntTest, Filter) {
-  let res = s.filter([](let x) { return x > 1; });
+  let res = s.filter([](let x) { return x > 1; }).eval();
 
   auto it = res.begin();
   EXPECT_EQ(*it, 2);
@@ -52,6 +53,13 @@ TEST_F(SeqIntTest, MaxElement) {
   EXPECT_EQ(*max_el, 3);
   let min_el = s.max_element([](let x, let y) { return x > y; });
   EXPECT_EQ(*min_el, 1);
+}
+
+TEST_F(SeqIntTest, MaxValue) {
+  let max_val = s.max([](let x, let y) { return x < y; });
+  EXPECT_EQ(*max_val, 3);
+  let min_val = s.max([](let x, let y) { return x > y; });
+  EXPECT_EQ(*min_val, 1);
 }
 
 TEST_F(SeqIntTest, Sorted) {
@@ -81,7 +89,7 @@ TEST_F(SeqIntTest, SortedReverse) {
 }
 
 TEST_F(SeqIntTest, LazyMap) {
-  let res = s.map_lazy([](let x){ return x * x;});
+  let res = s.map([](let x){ return x * x;});
 
   auto it = res.begin();
   EXPECT_EQ(*it, 1);
@@ -94,7 +102,7 @@ TEST_F(SeqIntTest, LazyMap) {
 }
 
 TEST_F(SeqIntTest, LazyFilter) {
-  let res = s.filter_lazy([](let x) { return x > 1; });
+  let res = s.filter([](let x) { return x > 1; });
 
   auto it = res.begin();
   EXPECT_EQ(*it, 2);
@@ -105,14 +113,14 @@ TEST_F(SeqIntTest, LazyFilter) {
 }
 
 TEST_F(SeqIntTest, LazyMapReduce) {
-  let res = s.map_lazy([](let x){ return x * x;})
+  let res = s.map([](let x){ return x * x;})
       .reduce(0, [](let acc, let x) { return acc + x;});
   EXPECT_EQ(res, 14);
 }
 
 TEST_F(SeqIntTest, LazyMapFilterReduce) {
-  let res = s.map_lazy([](let x){ return x * x;})
-      .filter_lazy([](let x){ return x > 1; })
+  let res = s.map([](let x){ return x * x;})
+      .filter([](let x){ return x > 1; })
       .reduce(0, [](let acc, let x) { return acc + x;});
   EXPECT_EQ(res, 13);
 }
@@ -124,12 +132,12 @@ TEST_F(SeqIntTest, TakeWhile) {
 
 TEST_F(SeqIntTest, Tail) {
   let res = s.tail();
-  EXPECT_EQ(res, 3);
+  EXPECT_EQ(*res, 3);
 }
 
 TEST_F(SeqIntTest, Head) {
   let res = s.head();
-  EXPECT_EQ(res, 1);
+  EXPECT_EQ(*res, 1);
 }
 
 TEST_F(SeqIntTest, AnyTrue) {
@@ -165,7 +173,7 @@ public:
 };
 
 TEST_F(SeqStringTest, Map) {
-  let res = s.map([](let x){ return x + x;});
+  let res = s.map([](let x){ return x + x;}).eval();
 
   auto it  = res.begin();
   EXPECT_EQ(*it, "aaaaaa");
@@ -189,7 +197,7 @@ TEST_F(SeqStringTest, MapReduce) {
 }
 
 TEST_F(SeqStringTest, Filter) {
-  let res = s.filter([](let x) { return x.size() > 1; });
+  let res = s.filter([](let x) { return x.size() > 1; }).eval();
 
   auto it = res.begin();
   EXPECT_EQ(*it, "aaa");
@@ -233,7 +241,7 @@ TEST_F(SeqStringTest, SortedReverse) {
 }
 
 TEST_F(SeqStringTest, LazyMap) {
-  let res = s.map_lazy([](let x){ return x + x;});
+  let res = s.map([](let x){ return x + x;});
 
   auto it = res.begin();
   EXPECT_EQ(*it, "aaaaaa");
@@ -246,7 +254,7 @@ TEST_F(SeqStringTest, LazyMap) {
 }
 
 TEST_F(SeqStringTest, LazyFilter) {
-  let res = s.filter_lazy([](let x) { return x.size() > 1; });
+  let res = s.filter([](let x) { return x.size() > 1; });
 
   auto it = res.begin();
   EXPECT_EQ(*it, "aaa");
@@ -257,14 +265,14 @@ TEST_F(SeqStringTest, LazyFilter) {
 }
 
 TEST_F(SeqStringTest, LazyMapReduce) {
-  let res = s.map_lazy([](let x){ return x + x; })
+  let res = s.map([](let x){ return x + x; })
       .reduce(std::string(), [](let acc, let x) { return acc + x; });
   EXPECT_EQ(res, "aaaaaabbbbcc");
 }
 
 TEST_F(SeqStringTest, LazyMapFilterReduce) {
-  let res = s.map_lazy([](let x){ return x + x; })
-      .filter_lazy([](let x){ return x.size() != 4; })
+  let res = s.map([](let x){ return x + x; })
+      .filter([](let x){ return x.size() != 4; })
       .reduce(std::string(), [](let acc, let x) { return acc + x; });
   EXPECT_EQ(res, "aaaaaacc");
 }
@@ -276,12 +284,12 @@ TEST_F(SeqStringTest, TakeWhile) {
 
 TEST_F(SeqStringTest, Tail) {
   let res = s.tail();
-  EXPECT_EQ(res, "c");
+  EXPECT_EQ(*res, "c");
 }
 
 TEST_F(SeqStringTest, Head) {
   let res = s.head();
-  EXPECT_EQ(res, "aaa");
+  EXPECT_EQ(*res, "aaa");
 }
 
 TEST_F(SeqStringTest, AnyTrue) {
@@ -342,7 +350,7 @@ public:
 };
 
 TEST_F(StringTest, SplitToVectorOnWhitespace) {
-  let split = s.split(' ');
+  let split = s.split(' ').eval();
 
   auto it = split.begin();
   EXPECT_EQ(std::string(it->data(), it->size()), "the");
@@ -367,7 +375,7 @@ TEST_F(StringTest, SplitToVectorOnWhitespace) {
 }
 
 TEST_F(StringTest, SplitToVectorOnComma) {
-  let split = s.split(',');
+  let split = s.split(',').eval();
 
   auto it = split.begin();
   EXPECT_EQ(std::string(it->data(), it->size()), "the quick brown fox");
@@ -378,7 +386,7 @@ TEST_F(StringTest, SplitToVectorOnComma) {
 }
 
 TEST_F(StringTest, LazySplitToVectorOnComma) {
-  let split = s.split_lazy(',');
+  let split = s.split(',');
 
   auto it = split.begin();
   EXPECT_EQ(std::string((*it).data(), (*it).size()), "the quick brown fox");
@@ -389,7 +397,7 @@ TEST_F(StringTest, LazySplitToVectorOnComma) {
 }
 
 TEST_F(StringTest, SplitToStringOnWhitespace) {
-  let split = s.split<std::string>(' ');
+  let split = s.split<std::string>(' ').eval();
 
   auto it = split.begin();
   EXPECT_EQ(*it, "the");
@@ -414,7 +422,7 @@ TEST_F(StringTest, SplitToStringOnWhitespace) {
 }
 
 TEST_F(StringTest, SplitToStringOnComma) {
-  let split = s.split<std::string>(',');
+  let split = s.split<std::string>(',').eval();
 
   auto it = split.begin();
   EXPECT_EQ(*it, "the quick brown fox");
@@ -425,7 +433,7 @@ TEST_F(StringTest, SplitToStringOnComma) {
 }
 
 TEST_F(StringTest, LazySplitToStringOnComma) {
-  let split = s.split_lazy<std::string>(',');
+  let split = s.split<std::string>(',');
 
   auto it = split.begin();
   EXPECT_EQ(*it, "the quick brown fox");

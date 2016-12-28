@@ -6,9 +6,10 @@ The goal of this minimal library is to promote functional concepts in C++.
 
 This library is based around a sequence class and the let keyword.
 
-- `class seq` -- creates an immutable sequence from an iterator, and defines
-methods such as map, map_lazy, filter, filter_lazy, reduce, sorted, max_element,
-split, split_lazy, and take_while.
+- `class seq` -- creates a lazy immutable sequence from an iterator, and defines
+methods such as map, filter, reduce, sorted, split, take_while, etc..
+By lazy we mean that elements are only evaluated as needed, or when the `eval()`
+method is explicitly called.
 etc..
 - `#define let const auto` -- C++ treats variables as mutable by default, and
 as programmers we have a tendancy to stick to defaults. Behavior can be hard to
@@ -25,6 +26,7 @@ tests) by commenting out this line.
 
 Other classes of interestes are
 - `class enumerate` -- enumerates a sequence, similar to python's enumerate.
+- `class memoize` -- memoize a function call.
 - `class unfold` -- creates a stream of values such that x{n+1} = f(x{n}),
 similar to elixir's unfold.
 - `class zip` -- zip together a list of sequences, similar to python's zip.
@@ -43,8 +45,8 @@ one example:
 int main() {
   let a = std::vector<int>{1, 2, 3};
   let res = ftl::make_seq(a.begin(), a.end())
-      .map_lazy([](let x){ return x * x; })
-      .filter_lazy([](let x){ return x > 1; })
+      .map([](let x){ return x * x; })
+      .filter([](let x){ return x > 1; })
       .reduce(0, [](let acc, let x) { return acc + x; });
   assert(res == 13);
 }
