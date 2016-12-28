@@ -234,10 +234,10 @@ public:
 
   auto tail() const {
     for (auto it = begin_;;) {
-      const auto val = *it;
+      Iter last_it(it);
       ++it;
       if (it == end_) {
-          return val;
+          return *last_it;
       }
     }
     return *end_;
