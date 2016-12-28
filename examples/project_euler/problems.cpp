@@ -30,7 +30,6 @@ uint64_t largest_prime_factor(uint64_t num) {
   return p == num ? p : largest_prime_factor(num / p);
 }
 
-
 uint64_t is_prime(uint64_t num) {
   return num == smallest_prime_factor(num);
 };
@@ -91,7 +90,7 @@ uint64_t problem12() {
       return ftl::range(1, sqrtn)
           .filter([n](let i) { return n % i == 0; })
           .map([](let _) { return 1; })
-          .sum() * 2 + (sqrtn * sqrtn == 1 ? 1 : 0);
+          .sum() * 2 + (sqrtn * sqrtn == n ? 1 : 0);
   };
   return ftl::iota(1)
      .map([](let x) { return x * (x + 1) / 2; })
