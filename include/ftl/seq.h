@@ -27,6 +27,38 @@ private:
 };
 
 template <typename Iter, typename Func>
+class flat_map_iterator {
+public:
+  using iterator_type = typename Iter::value_type::iterator;
+  using value_type =
+      typename std::result_of<Func(typename iterator_type::value_type)>::type;
+
+  flat_map_iterator(const Iter &it, const Func &f)
+      : it_(it),
+        it_inner_(it_.has_next() ?
+            ftl::optional<iterator_type>() :
+            ftl::optional<iterator_type>(it_.next())),
+        f_(f) { }
+
+  bool has_next() const { return it_inner_.has_next(); }
+
+  flat_map_iterator& operator++() {
+    ++(*it_inner_);
+    if (*it_inner_ == (*it_).end()) {
+      ++it_;
+      (*it_inner_).~iterator_type();
+      new (&(*it_inner_)) iterator_type((*it_).begin());
+    }
+    return *this;
+  }
+
+private:
+  Iter it_;
+  ftl::optional<iterator_type> it_inner_;
+  Func f_;
+};
+
+template <typename Iter, typename Func>
 class filter_iterator {
 public:
   using value_type = typename Iter::value_type;
@@ -122,7 +154,6 @@ private:
   size_t idx_;
 };
 
-
 }  // namespace impl
 
 template <typename Iter, typename Data=std::vector<typename Iter::value_type>>
@@ -159,6 +190,13 @@ public:
     return seq<impl::map_iterator<Iter, Func>, Data>(
         impl::map_iterator<Iter, Func>(begin_, f),
         impl::map_iterator<Iter, Func>(end_, f), data_);
+  }
+
+  template <typename Func>
+  auto flat_map(Func f) const {
+    return seq<impl::flat_map_iterator<Iter, Func>, Data>(
+        impl::flat_map_iterator<Iter, Func>(begin_, f),
+        impl::flat_map_iterator<Iter, Func>(end_, f), data_);
   }
 
   template <typename T, typename Func>

@@ -62,6 +62,11 @@ uint64_t problem3() {
   return largest_prime_factor(600851475143llu);
 }
 
+// Find the largest palindrome made from the product of two 3-digit numbers.
+uint64_t problem4() {
+  return 0;
+}
+
 // Find the difference between the sum of the squares of the first one hundred
 // natural numbers and the square of the sum.
 uint64_t problem6() {
