@@ -327,7 +327,7 @@ public:
   template <typename T=typename Iter::value_type>
   typename std::enable_if<impl::bool_exists<T>::value, bool>::type
   any() const {
-    return any([](const auto &x) { return static_cast<bool>(x); });
+    return any([](const T &x) { return static_cast<bool>(x); });
   }
 
   template <typename Func>
@@ -343,7 +343,7 @@ public:
   template <typename T=typename Iter::value_type>
   typename std::enable_if<impl::bool_exists<T>::value, bool>::type
   all() const {
-    return all([](const auto &x) { return static_cast<bool>(x); });
+    return all([](const T &x) { return static_cast<bool>(x); });
   }
 
 private:
