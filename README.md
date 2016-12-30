@@ -72,10 +72,6 @@ make -j
 ```
 
 ### Todo
-- complete seq
-  - .reduce convenience methods (.contains, ...)
-  - .scan
-  - .reverseIterators
 - file to seq
 - investigate parallelism
 
