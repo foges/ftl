@@ -229,27 +229,23 @@ public:
   }
 
   template <typename Func>
-  auto max_element(Func cmp) const {
-    auto max_el = begin_;
+  auto max(Func cmp) const {
+    ftl::optional<value_type> max_val;
     for (auto it = begin_; it != end_; ++it) {
-      if (cmp(*max_el, *it)) {
-        max_el = it;
+      if (!max_val || cmp(*max_val, *it)) {
+        max_val = *it;
       }
     }
-    return max_el;
+    return max_val;
   }
 
-  template <typename Func>
-  ftl::optional<value_type> max(Func cmp) const {
-    const auto max_el = max_element(cmp);
-    if (max_el == end_) {
-      return ftl::optional<value_type>();
-    } else {
-      return *max_el;
-    }
+  template <typename T=value_type>
+  typename std::enable_if<impl::lt_exists<T>::value, ftl::optional<T>>::type
+  max() const {
+    return max([](const T &x, const T &y){ return x < y; });
   }
 
-  template <typename T=typename Iter::value_type>
+  template <typename T=value_type>
   typename std::enable_if<impl::plus_exists<T>::value, T>::type
   sum() const {
     return reduce(T(), [](const T &acc, const value_type &x){

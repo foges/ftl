@@ -60,14 +60,12 @@ TEST_F(SeqIntTest, Filter) {
   EXPECT_EQ(it, res.end());
 }
 
-TEST_F(SeqIntTest, MaxElement) {
-  let max_el = s.max_element([](let x, let y) { return x < y; });
+TEST_F(SeqIntTest, MaxValue) {
+  let max_el = s.max();
   EXPECT_EQ(*max_el, 3);
-  let min_el = s.max_element([](let x, let y) { return x > y; });
-  EXPECT_EQ(*min_el, 1);
 }
 
-TEST_F(SeqIntTest, MaxValue) {
+TEST_F(SeqIntTest, MaxValueFunctor) {
   let max_val = s.max([](let x, let y) { return x < y; });
   EXPECT_EQ(*max_val, 3);
   let min_val = s.max([](let x, let y) { return x > y; });
@@ -232,10 +230,10 @@ TEST_F(SeqStringTest, Filter) {
   EXPECT_EQ(it, res.end());
 }
 
-TEST_F(SeqStringTest, MaxElement) {
-  let max_el = s.max_element([](let x, let y) { return x.size() < y.size(); });
+TEST_F(SeqStringTest, MaxValueFunctor) {
+  let max_el = s.max([](let x, let y) { return x.size() < y.size(); });
   EXPECT_EQ(*max_el, "aaa");
-  let min_el = s.max_element([](let x, let y) { return x.size() > y.size(); });
+  let min_el = s.max([](let x, let y) { return x.size() > y.size(); });
   EXPECT_EQ(*min_el, "c");
 }
 

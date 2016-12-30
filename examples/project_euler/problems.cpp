@@ -62,6 +62,25 @@ uint64_t problem3() {
   return largest_prime_factor(600851475143llu);
 }
 
+// Find the largest palindrome made from the product of two 3-digit numbers.
+uint32_t problem4() {
+  let is_palindrome = [](let n) {
+    let s = std::to_string(n);
+    return s == std::string(s.rbegin(), s.rend());
+  };
+
+  return ftl::range(100, 1000)
+      .map([](let a){
+          return ftl::range(a, 1000).map([a](let b) {
+              return std::make_tuple(a, b);
+          });
+      })
+      .flat_map([](let ab) { return std::get<0>(ab) * std::get<1>(ab); })
+      .filter(is_palindrome)
+      .max()
+      .value();
+}
+
 // Find the difference between the sum of the squares of the first one hundred
 // natural numbers and the square of the sum.
 uint64_t problem6() {
@@ -211,6 +230,7 @@ int main() {
   RUN(problem1);
   RUN(problem2);
   RUN(problem3);
+  RUN(problem4);
   RUN(problem6);
   RUN(problem7);
   RUN(problem9);
