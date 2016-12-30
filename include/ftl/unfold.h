@@ -1,3 +1,5 @@
+#pragma once
+
 #include <ftl/optional.h>
 #include <ftl/seq.h>
 
