@@ -50,9 +50,9 @@ TEST_F(SeqIntTest, MapReduce) {
   EXPECT_EQ(res, 14);
 }
 
-/*
 TEST_F(SeqIntTest, Filter) {
-  let res = s.filter([](let x) { return x > 1; }).eval();
+  let res = ftl::make_seq(a.begin(), a.end())
+      .filter([](let x) { return x > 1; }).get();
 
   auto it = res.begin();
   EXPECT_EQ(*it, 2);
@@ -61,7 +61,7 @@ TEST_F(SeqIntTest, Filter) {
   ++it;
   EXPECT_EQ(it, res.end());
 }
-
+/*
 TEST_F(SeqIntTest, MaxValue) {
   let max_el = s.max();
   EXPECT_EQ(*max_el, 3);
@@ -141,37 +141,43 @@ TEST_F(SeqIntTest, TakeWhile) {
   let res = s.take_while([](let x){ return x < 3; }).sum();
   EXPECT_EQ(res, 3);
 }
-
+*/
 TEST_F(SeqIntTest, Tail) {
+  let s = ftl::make_seq(a.begin(), a.end());
   let res = s.tail();
   EXPECT_EQ(*res, 3);
 }
 
 TEST_F(SeqIntTest, Head) {
+  let s = ftl::make_seq(a.begin(), a.end());
   let res = s.head();
   EXPECT_EQ(*res, 1);
 }
 
 TEST_F(SeqIntTest, AnyTrue) {
+  let s = ftl::make_seq(a.begin(), a.end());
   let res = s.map([](let x){ return x == 2; }).any();
   EXPECT_EQ(res, true);
 }
 
 TEST_F(SeqIntTest, AnyFalse) {
+  let s = ftl::make_seq(a.begin(), a.end());
   let res = s.map([](let x){ return x == 4; }).any();
   EXPECT_EQ(res, false);
 }
 
 TEST_F(SeqIntTest, AllTrue) {
+  let s = ftl::make_seq(a.begin(), a.end());
   let res = s.map([](let x){ return x > 0; }).all();
   EXPECT_EQ(res, true);
 }
 
 TEST_F(SeqIntTest, AllFalse) {
+  let s = ftl::make_seq(a.begin(), a.end());
   let res = s.map([](let x){ return x == 2; }).all();
   EXPECT_EQ(res, false);
 }
-
+/*
 //----------------------------------------------------------------------------//
 
 class SeqStringTest : public ::testing::Test {

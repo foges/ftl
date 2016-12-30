@@ -56,14 +56,14 @@ public:
     };
 
     return seq<decltype(lambda),
-               decltype(f(*(value_type*)(0)))>(lambda, data_);
+               decltype(f(*(value_type*)(0))), Data>(lambda, data_);
   }
 
   template <typename Func>
   auto filter(Func f) const {
     Function f_prev(f_);
-    auto lambda = [f_prev, f](const auto &x){
-        f_prev([x, f](const auto &f_next) {
+    auto lambda = [f_prev, f](const auto &f_next){
+        f_prev([f_next, f](const auto &x) {
             if (f(x)) {
               return f_next(x);
             } else {
@@ -72,7 +72,7 @@ public:
         });
     };
 
-    return seq<decltype(lambda), value_type>(lambda, data_);
+    return seq<decltype(lambda), value_type, Data>(lambda, data_);
   }
 
   template <typename T, typename Func>
@@ -95,7 +95,7 @@ public:
         });
     };
 
-    return seq<decltype(lambda), value_type>(lambda, data_);
+    return seq<decltype(lambda), value_type, Data>(lambda, data_);
   }
 
 //   // TODO make use of .get method
@@ -129,62 +129,56 @@ public:
 //  }
 
   ftl::optional<value_type> head() const {
-    ftl::optional<value_type> hd;
-    f_([&hd](const auto &x){ hd = ftl::optional<value_type>(x); return false; });
-
-    return hd;
+    ftl::optional<value_type> h;
+    f_([&h](const auto &x){ h = ftl::optional<value_type>(x); return false; });
+    return h;
   }
 
   ftl::optional<value_type> tail() const {
-    ftl::optional<value_type> tl;
-    f_([&tl](const auto &x){ tl = ftl::optional<value_type>(x); return true; });
-
-    return tl;
+    ftl::optional<value_type> t;
+    f_([&t](const auto &x){ t = ftl::optional<value_type>(x); return true; });
+    return t;
   }
 
-//
-//  ftl::optional<value_type> tail() const {
-//    for (auto it = begin_;;) {
-//      Iter last_it(it);
-//      ++it;
-//      if (it == end_) {
-//          return *last_it;
-//      }
-//    }
-//    return ftl::optional<value_type>();
-//  }
-//
-//  template <typename Func>
-//  bool any(const Func &f) const {
-//    for (const auto &val : *this) {
-//      if (f(val)) {
-//        return true;
-//      }
-//    }
-//    return false;
-//  }
-//
-//  template <typename T=typename Iter::value_type>
-//  typename std::enable_if<impl::bool_exists<T>::value, bool>::type
-//  any() const {
-//    return any([](const T &x) { return static_cast<bool>(x); });
-//  }
-//
-//  template <typename Func>
-//  bool all(const Func &f) const {
-//    for (const auto &val : *this) {
-//      if (!f(val)) {
-//        return false;
-//      }
-//    }
-//    return true;
-//  }
-//
-//  template <typename T=typename Iter::value_type>
-//  typename std::enable_if<impl::bool_exists<T>::value, bool>::type
-//  all() const {
-//    return all([](const T &x) { return static_cast<bool>(x); });
-//  }
+  template <typename Func>
+  bool any(const Func &f) const {
+    bool test = false;
+    f_([&test, f](const auto &x) {
+        if (f(x)) {
+          test = true;
+          return false;
+        } else {
+          return true;
+        }
+    });
+    return test;
+  }
+
+  template <typename T=value_type>
+  typename std::enable_if<impl::bool_exists<T>::value, bool>::type
+  any() const {
+    return any([](const T &x) { return static_cast<bool>(x); });
+  }
+
+  template <typename Func>
+  bool all(const Func &f) const {
+    bool test = true;
+    f_([&test, f](const auto &x) {
+        if (!f(x)) {
+          test = false;
+          return false;
+        } else {
+          return true;
+        }
+    });
+    return test;
+  }
+
+  template <typename T=value_type>
+  typename std::enable_if<impl::bool_exists<T>::value, bool>::type
+  all() const {
+    return all([](const T &x) { return static_cast<bool>(x); });
+  }
 
 private:
   Function f_;
