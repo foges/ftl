@@ -25,6 +25,18 @@ TEST_F(SeqIntTest, Map) {
   EXPECT_EQ(it, res.end());
 }
 
+TEST_F(SeqIntTest, FlatMap) {
+  let res = s.map([](let a){
+      return ftl::range(a, 4).map([a](let b){
+          return std::make_tuple(a, b);
+      });
+  })
+  .flat_map([](let x){ return std::get<0>(x) * std::get<1>(x); })
+  .sum();
+
+   EXPECT_EQ(res, 25);
+}
+
 TEST_F(SeqIntTest, Reduce) {
   let acc = s.reduce(0, [](let acc, let x) { return acc + x; });
   EXPECT_EQ(acc, 6);
@@ -183,6 +195,19 @@ TEST_F(SeqStringTest, Map) {
   EXPECT_EQ(*it, "cc");
   ++it;
   EXPECT_EQ(it, res.end());
+}
+
+TEST_F(SeqStringTest, FlatMap) {
+  let res = s.map([](let a){
+      let size = static_cast<int>(a.size());
+      return ftl::range(size, 4).map([size](let b){
+          return std::make_tuple(size, b);
+      });
+  })
+  .flat_map([](let x){ return std::get<0>(x) * std::get<1>(x); })
+  .sum();
+
+   EXPECT_EQ(res, 25);
 }
 
 TEST_F(SeqStringTest, Reduce) {

@@ -77,6 +77,32 @@ uint64_t problem7() {
   return ftl::iota(2llu).filter(is_prime).take(10'001).tail().value();
 }
 
+// There exists exactly one Pythagorean triplet for which a + b + c = 1000.
+// Find the product abc.
+uint32_t problem9() {
+  let n = 1000;
+  return ftl::range(1, n / 2).map([](let a){
+      return ftl::range(1, a).map([a](let b){
+          return std::make_tuple(a, b);
+      });
+  })
+  .flat_map([n](let ab){
+      return std::tuple_cat(ab,
+          std::make_tuple(n - std::get<0>(ab) - std::get<1>(ab)));
+  })
+  .filter([](let abc) {
+      let a = std::get<0>(abc);
+      let b = std::get<1>(abc);
+      let c = std::get<2>(abc);
+      return a * a + b * b ==  c * c;
+  })
+  .map([](let abc){
+      return std::get<0>(abc) * std::get<1>(abc) * std::get<2>(abc);
+  })
+  .head()
+  .value();
+}
+
 // Find the sum of all the primes below two million.
 uint64_t problem10() {
   return ftl::range(2, 2'000'000).filter(is_prime).sum<uint64_t>();
@@ -187,6 +213,7 @@ int main() {
   RUN(problem3);
   RUN(problem6);
   RUN(problem7);
+  RUN(problem9);
   RUN(problem10);
   RUN(problem12);
   RUN(problem14);

@@ -27,6 +27,58 @@ private:
 };
 
 template <typename Iter, typename Func>
+class flat_map_iterator {
+public:
+  using iterator_type = typename Iter::value_type::iterator;
+  using value_type =
+      typename std::result_of<Func(typename iterator_type::value_type)>::type;
+
+  flat_map_iterator(const Iter &it, const Iter &end, const Func &f)
+      : it_(it),
+        end_(end),
+        it_inner_(it_ == end_ ?
+            ftl::optional<iterator_type>() :
+            ftl::optional<iterator_type>((*it_).begin())),
+        f_(f) {
+    make_valid_();
+  }
+
+  value_type operator*() const {
+     return f_(**it_inner_);
+  }
+
+  flat_map_iterator& operator++() {
+    ++(*it_inner_);
+    make_valid_();
+    return *this;
+  }
+
+  bool operator==(const flat_map_iterator &rhs) const {
+    return it_ == rhs.it_;
+  }
+
+  bool operator!=(const flat_map_iterator &rhs) const {
+    return !(*this == rhs);
+  }
+
+private:
+  void make_valid_() {
+    while (it_ != end_ && *it_inner_ == (*it_).end()) {
+      ++it_;
+      if (it_ != end_) {
+        (*it_inner_).~iterator_type();
+        new (&(*it_inner_)) iterator_type((*it_).begin());
+      }
+    }
+  }
+
+  Iter it_;
+  Iter end_;
+  ftl::optional<iterator_type> it_inner_;
+  Func f_;
+};
+
+template <typename Iter, typename Func>
 class filter_iterator {
 public:
   using value_type = typename Iter::value_type;
@@ -152,6 +204,13 @@ public:
     }
 
     return seq<decltype(res->begin())>(res->begin(), res->end(), res);
+  }
+
+  template <typename Func>
+  auto flat_map(Func f) const {
+    return seq<impl::flat_map_iterator<Iter, Func>, Data>(
+        impl::flat_map_iterator<Iter, Func>(begin_, end_, f),
+        impl::flat_map_iterator<Iter, Func>(end_, end_, f), data_);
   }
 
   template <typename Func>
