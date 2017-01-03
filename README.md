@@ -4,13 +4,15 @@ The goal of this minimal library is to promote functional concepts in C++.
 
 ### Summary
 
-This library is based around a sequence class and the let keyword.
+This library is based around a sequence class, generators, and the let keyword.
 
 - `class seq` -- creates a lazy immutable sequence from a generator, and defines
 methods such as map, filter, reduce, sorted, split, take_while, etc..
 By lazy we mean that elements are only evaluated as needed, or when the `eval()`
 method is explicitly called.
 etc..
+- Generators -- generate a stream for consumption by the `seq` class,
+examples include range, iota, unfold.
 - `#define let const auto` -- C++ treats variables as mutable by default, and
 as programmers we have a tendancy to stick to defaults. Behavior can be hard to
 get around, especially if you don't give people an incentive to change. By
@@ -24,10 +26,8 @@ simply comment it out one line in `include/ftl/flt.h`. Don't worry, the library
 itself does not use the let keyword, so you won't break anything (apart from
 tests) by commenting out this line.
 
-Other classes of interestes are
+Other classes of interestes are:
 - `class memoize` -- memoize a function call.
-- `class unfold` -- creates a stream of values such that x{n+1} = f(x{n}),
-similar to elixir's unfold.
 
 ### Examples
 

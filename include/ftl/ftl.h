@@ -1,8 +1,8 @@
 #pragma once
 
+#include <ftl/generators.h>
 #include <ftl/memoize.h>
 #include <ftl/seq.h>
-#include <ftl/unfold.h>
 
 #define let const auto
 
