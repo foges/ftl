@@ -6,8 +6,8 @@ class MemoizeIntTest : public ::testing::Test {
 public:
   MemoizeIntTest() : a({1, 2, 3}), s(ftl::make_seq(a.begin(), a.end())) { }
 
-  std::vector<int> a;
-  ftl::seq<std::vector<int>::iterator> s;
+  const std::vector<int> a;
+  ftl::seq<ftl::impl::seq_iter<std::vector<const int>::iterator>, int> s;
 };
 
 TEST_F(MemoizeIntTest, Basic) {

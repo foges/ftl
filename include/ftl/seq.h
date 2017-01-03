@@ -45,10 +45,26 @@ public:
 
   seq(const Function &f) : seq(f, nullptr) { }
 
+  /* \brief Apply a function to each element in the sequence
+   *
+   *  The sequence stops when f(x) returns false.
+   */
   template <typename Func>
   void apply(const Func &f) const {
     Function f_prev(f_);
     f_prev([&f](const auto &x){ return f(x); });
+  }
+
+  /* \brief Constructs lambda to pipe the result of one sequence into the next
+   *
+   *  The function f must take as arguments two lambdas, the first one
+   *  containing the generator for the previous sequence and the second
+   *  containing the acceptor for the next sequence
+   */
+  template <typename Func>
+  auto pipe(const Func &f) const {
+    Function f_prev(f_);
+    return [f_prev, f](const auto &f_next){ f(f_prev, f_next); };
   }
 
   auto get() const {
@@ -68,22 +84,21 @@ public:
   }
 
   template <typename Func>
-  auto map(Func f) const {
-    Function f_prev(f_);
-    auto lambda = [f_prev, f](const auto &f_next){
+  auto map(const Func &f) const {
+    auto lambda = pipe([f](const auto &f_prev, const auto &f_next) {
         f_prev([&f_next, &f](const auto &x){
             return f_next(f(x));
         });
-    };
+    });
 
     return seq<decltype(lambda),
                decltype(f(*(value_type*)(0))), Data>(lambda, data_);
   }
 
   template <typename Func>
-  auto flat_map(Func f) const {
+  auto flat_map(const Func &f) const {
     Function f_prev(f_);
-    auto lambda = [f_prev, f](const auto &f_next){
+    auto lambda = pipe([f](const auto &f_prev, const auto &f_next) {
         f_prev([&f_next, &f](const auto &x){
             bool do_continue = true;
             x.apply([&f_next, &f, &do_continue](const auto &x) {
@@ -92,7 +107,7 @@ public:
             });
             return do_continue;
         });
-    };
+    });
 
     using value_value_type = typename value_type::value_type;
     return seq<decltype(lambda),
@@ -100,9 +115,8 @@ public:
   }
 
   template <typename Func>
-  auto filter(Func f) const {
-    Function f_prev(f_);
-    auto lambda = [f_prev, f](const auto &f_next){
+  auto filter(const Func &f) const {
+    auto lambda = pipe([f](const auto &f_prev, const auto &f_next) {
         f_prev([&f_next, f](const auto &x){
             if (f(x)) {
               return f_next(x);
@@ -110,13 +124,13 @@ public:
               return true;
             }
         });
-    };
+    });
 
     return seq<decltype(lambda), value_type, Data>(lambda, data_);
   }
 
   template <typename T, typename Func>
-  T reduce(T init, Func f) const {
+  T reduce(T init, const Func &f) const {
     apply([&init, f](const auto &x){ init = f(init, x); return true; });
 
     return init;
@@ -151,8 +165,7 @@ public:
 
   template <typename Func>
   auto take_while(const Func &f) const {
-    Function f_prev(f_);
-    auto lambda = [f_prev, f](const auto &f_next){
+    auto lambda = pipe([f](const auto &f_prev, const auto &f_next) {
         f_prev([&f_next, f](const auto &x){
             if (f(x)) {
               return f_next(x);
@@ -160,15 +173,13 @@ public:
               return false;
             }
         });
-    };
+    });
 
     return seq<decltype(lambda), value_type, Data>(lambda, data_);
   }
 
-  template <typename Func>
   auto take(const size_t num) {
-    Function f_prev(f_);
-    auto lambda = [f_prev, num](const auto &f_next){
+    auto lambda = pipe([num](const auto &f_prev, const auto &f_next) {
         size_t idx = 0;
         f_prev([&f_next, &idx, num](const auto &x) {
             if (idx < num) {
@@ -178,13 +189,13 @@ public:
               return false;
             }
         });
-    };
+    });
 
     return seq<decltype(lambda), value_type, Data>(lambda, data_);
   }
 
   template <typename Func>
-  auto sorted(Func cmp) const {
+  auto sorted(const Func &cmp) const {
     auto res = this->get_shared();
     std::sort(res->begin(), res->end(), cmp);
     return seq<seq_iter_type, value_type>(
@@ -204,8 +215,7 @@ public:
    */
   template <typename Result=std::vector<value_type>>
   auto split(const value_type &separator) const {
-    Function f_prev(f_);
-    auto lambda = [f_prev, separator](const auto &f_next){
+    auto lambda = pipe([separator](const auto &f_prev, const auto &f_next) {
         Result result;
         bool do_continue = false;
         f_prev([&f_next, &separator, &result, &do_continue](const auto &x) {
@@ -222,7 +232,7 @@ public:
         if (do_continue) {
           f_next(result);
         }
-    };
+    });
 
     return seq<decltype(lambda), Result, Data>(lambda, data_);
   }

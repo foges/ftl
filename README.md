@@ -6,7 +6,7 @@ The goal of this minimal library is to promote functional concepts in C++.
 
 This library is based around a sequence class and the let keyword.
 
-- `class seq` -- creates a lazy immutable sequence from an iterator, and defines
+- `class seq` -- creates a lazy immutable sequence from a generator, and defines
 methods such as map, filter, reduce, sorted, split, take_while, etc..
 By lazy we mean that elements are only evaluated as needed, or when the `eval()`
 method is explicitly called.
@@ -25,11 +25,9 @@ itself does not use the let keyword, so you won't break anything (apart from
 tests) by commenting out this line.
 
 Other classes of interestes are
-- `class enumerate` -- enumerates a sequence, similar to python's enumerate.
 - `class memoize` -- memoize a function call.
 - `class unfold` -- creates a stream of values such that x{n+1} = f(x{n}),
 similar to elixir's unfold.
-- `class zip` -- zip together a list of sequences, similar to python's zip.
 
 ### Examples
 
