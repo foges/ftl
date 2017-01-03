@@ -97,7 +97,6 @@ public:
 
   template <typename Func>
   auto flat_map(const Func &f) const {
-    Function f_prev(f_);
     auto lambda = pipe([f](const auto &f_prev, const auto &f_next) {
         f_prev([&f_next, &f](const auto &x){
             bool do_continue = true;
@@ -117,7 +116,7 @@ public:
   template <typename Func>
   auto filter(const Func &f) const {
     auto lambda = pipe([f](const auto &f_prev, const auto &f_next) {
-        f_prev([&f_next, f](const auto &x){
+        f_prev([&f_next, &f](const auto &x){
             if (f(x)) {
               return f_next(x);
             } else {
@@ -131,7 +130,7 @@ public:
 
   template <typename T, typename Func>
   T reduce(T init, const Func &f) const {
-    apply([&init, f](const auto &x){ init = f(init, x); return true; });
+    apply([&init, &f](const auto &x){ init = f(init, x); return true; });
 
     return init;
   }
@@ -146,9 +145,8 @@ public:
 
   template <typename Func>
   ftl::optional<value_type> max(const Func &cmp) const {
-    Function f_prev(f_);
     ftl::optional<value_type> res;
-    f_prev([&res, &cmp](const auto &x){
+    apply([&res, &cmp](const auto &x){
       if (!res || cmp(*res, x)) {
         res = ftl::optional<value_type>(x);
       }
@@ -166,7 +164,7 @@ public:
   template <typename Func>
   auto take_while(const Func &f) const {
     auto lambda = pipe([f](const auto &f_prev, const auto &f_next) {
-        f_prev([&f_next, f](const auto &x){
+        f_prev([&f_next, &f](const auto &x){
             if (f(x)) {
               return f_next(x);
             } else {
@@ -252,7 +250,7 @@ public:
   template <typename Func>
   bool any(const Func &f) const {
     bool test = false;
-    apply([&test, f](const auto &x) {
+    apply([&test, &f](const auto &x) {
         if (f(x)) {
           test = true;
           return false;
@@ -272,7 +270,7 @@ public:
   template <typename Func>
   bool all(const Func &f) const {
     bool test = true;
-    apply([&test, f](const auto &x) {
+    apply([&test, &f](const auto &x) {
         if (!f(x)) {
           test = false;
           return false;

@@ -17,13 +17,12 @@ include_directories("include")
 # Tests
 find_package(GTest REQUIRED)
 file(GLOB GTEST_SRC "test/gtest_*.cpp")
-#file(GLOB GTEST_SRC "test/gtest_seq.cpp")
 add_executable(ftl_test ${GTEST_SRC})
 target_include_directories(ftl_test PUBLIC "${GTEST_INCLUDE_DIRS}")
 target_link_libraries(ftl_test ${GTEST_BOTH_LIBRARIES})
 
 # Examples
-# file(GLOB EXAMPLES_SRC "examples/project_euler/problems.cpp" REQUIRED)
-# include_directories("include")
-# add_executable(ftl_examples ${EXAMPLES_SRC})
+file(GLOB EXAMPLES_SRC "examples/project_euler/problems.cpp" REQUIRED)
+include_directories("include")
+add_executable(ftl_examples ${EXAMPLES_SRC})
 
