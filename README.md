@@ -10,8 +10,8 @@ This library is based around a sequence class, generators, and the let keyword.
 methods such as map, filter, reduce, sorted, split, take_while, etc..
 By lazy we mean that elements are only evaluated as needed, or when the `eval()`
 method is explicitly called.
-- Generators -- generate a stream for consumption by the `seq` class,
-examples include range, iota, unfold.
+- Generators -- construct a `seq` to generate a sequence of values, examples
+include range, iota, unfold.
 - `#define let const auto` -- C++ treats variables as mutable by default, and
 as programmers we have a tendancy to stick to defaults. Behavior can be hard to
 get around, especially if you don't give people an incentive to change. By
