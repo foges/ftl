@@ -10,321 +10,258 @@
 namespace ftl {
 namespace impl {
 
-template <typename Iter, typename Func>
-class map_iterator {
+template <typename Iter>
+class seq_iter {
 public:
-  using value_type =
-      typename std::result_of<Func(typename Iter::value_type)>::type;
+  seq_iter(const Iter &begin, const Iter &end) : begin_(begin), end_(end) { }
 
-  map_iterator(Iter it, Func f) : it_(it), f_(f) { }
-  auto operator*() const { return f_(*it_); }
-  map_iterator& operator++() { ++it_; return *this; }
-  bool operator==(const map_iterator &rhs) const { return it_ == rhs.it_; }
-  bool operator!=(const map_iterator &rhs) const { return !(*this == rhs); }
-private:
-  Iter it_;
-  Func f_;
-};
-
-template <typename Iter, typename Func>
-class flat_map_iterator {
-public:
-  using iterator_type = typename Iter::value_type::iterator;
-  using value_type =
-      typename std::result_of<Func(typename iterator_type::value_type)>::type;
-
-  flat_map_iterator(const Iter &it, const Iter &end, const Func &f)
-      : it_(it),
-        end_(end),
-        it_inner_(it_ == end_ ?
-            ftl::optional<iterator_type>() :
-            ftl::optional<iterator_type>((*it_).begin())),
-        f_(f) {
-    make_valid_();
-  }
-
-  value_type operator*() const {
-     return f_(**it_inner_);
-  }
-
-  flat_map_iterator& operator++() {
-    ++(*it_inner_);
-    make_valid_();
-    return *this;
-  }
-
-  bool operator==(const flat_map_iterator &rhs) const {
-    return it_ == rhs.it_;
-  }
-
-  bool operator!=(const flat_map_iterator &rhs) const {
-    return !(*this == rhs);
-  }
-
-private:
-  void make_valid_() {
-    while (it_ != end_ && *it_inner_ == (*it_).end()) {
-      ++it_;
-      if (it_ != end_) {
-        (*it_inner_).~iterator_type();
-        new (&(*it_inner_)) iterator_type((*it_).begin());
+  template <typename Func>
+  void operator()(const Func &f_next) const {
+    for (auto it = begin_; it != end_; ++it) {
+      if (!f_next(*it)) {
+        break;
       }
     }
   }
 
-  Iter it_;
+private:
+  Iter begin_;
   Iter end_;
-  ftl::optional<iterator_type> it_inner_;
-  Func f_;
 };
-
-template <typename Iter, typename Func>
-class filter_iterator {
-public:
-  using value_type = typename Iter::value_type;
-
-  filter_iterator(Iter it, Iter end, Func f) : it_(it), end_(end), f_(f) {
-    make_valid_();
-  }
-  auto operator*() const { return *it_; }
-  filter_iterator& operator++() { ++it_; make_valid_(); return *this; }
-  bool operator==(const filter_iterator &rhs) const { return it_ == rhs.it_; }
-  bool operator!=(const filter_iterator &rhs) const { return !(*this == rhs); }
-private:
-  void make_valid_() { while (it_ != end_ && !f_(*it_)) { ++it_; } }
-  Iter it_;
-  Iter end_;
-  Func f_;
-};
-
-template <typename Iter, typename Res>
-class split_iterator {
-public:
-  using value_type = Res;
-
-  split_iterator(Iter it, Iter end, const typename Iter::value_type &separator)
-      : next_it_(it), it_(it), end_(end), separator_(separator) {
-    make_valid_();
-  }
-  auto operator*() const { return value_type(it_, next_it_); }
-  split_iterator& operator++() {
-    if (next_it_ != end_) {
-      ++next_it_;
-    }
-    it_ = next_it_;
-    make_valid_();
-    return *this;
-  }
-  bool operator==(const split_iterator &rhs) const { return it_ == rhs.it_; }
-  bool operator!=(const split_iterator &rhs) const { return !(*this == rhs); }
-private:
-  void make_valid_() {
-    while (next_it_ != end_ && *next_it_ != separator_) { ++next_it_; }
-  }
-  Iter next_it_;
-  Iter it_;
-  Iter end_;
-  typename Iter::value_type separator_;
-};
-
-template <typename Iter, typename Func>
-class take_while_iterator {
-public:
-  using value_type = typename Iter::value_type;
-
-  take_while_iterator(Iter it, bool is_end, const Func &f)
-      : it_(it), is_end_(is_end), f_(f) { }
-  auto operator*() const { return *it_; }
-  take_while_iterator& operator++() {
-    ++it_;
-    is_end_ = is_end_ || !f_(*it_);
-    return *this;
-  }
-  bool operator==(const take_while_iterator &rhs) const {
-    return it_ == rhs.it_ || (is_end_ && rhs.is_end_);
-  }
-  bool operator!=(const take_while_iterator &rhs) const {
-    return !(*this == rhs);
-  }
-private:
-  Iter it_;
-  bool is_end_;
-  Func f_;
-};
-
-template <typename Iter>
-class take_iterator {
-public:
-  using value_type = typename Iter::value_type;
-
-  take_iterator(Iter it, size_t idx) : it_(it), idx_(idx) { }
-  auto operator*() const { return *it_; }
-  take_iterator& operator++() {
-    ++it_; ++idx_;
-    return *this;
-  }
-  bool operator==(const take_iterator &rhs) const {
-    return it_ == rhs.it_ || idx_ == rhs.idx_;
-  }
-  bool operator!=(const take_iterator &rhs) const {
-    return !(*this == rhs);
-  }
-private:
-  Iter it_;
-  size_t idx_;
-};
-
 
 }  // namespace impl
 
-template <typename Iter, typename Data=std::vector<typename Iter::value_type>>
+template <typename Function,
+          typename Value,
+          typename Data=std::vector<Value>>
 class seq {
 public:
-  using value_type = typename Iter::value_type;
-  using iterator = Iter;
+  using value_type = Value;
+  using seq_iter_type =
+      impl::seq_iter<typename std::vector<value_type>::iterator>;
 
-  seq(const Iter begin,
-      const Iter end,
-      const std::shared_ptr<const Data> &data)
-    : begin_(begin),
-      end_(end),
-      data_(data) { }
+  seq(const Function &f, const std::shared_ptr<const Data> &data)
+      : f_(f), data_(data) { }
 
-  seq(const Iter begin, const Iter end) : seq(begin, end, nullptr) { }
+  seq(const Function &f) : seq(f, nullptr) { }
 
-  bool empty() const { return begin_ == end_; }
+  /* \brief Apply a function to each element in the sequence
+   *
+   *  The sequence stops when f(x) returns false.
+   */
+  template <typename Func>
+  void apply(const Func &f) const {
+    Function f_prev(f_);
+    f_prev([&f](const auto &x){ return f(x); });
+  }
 
-  const Iter begin()  const { return begin_; }
-  const Iter end()    const { return end_;   }
+  /* \brief Constructs lambda to pipe the result of one sequence into the next
+   *
+   *  The function f must take as arguments two lambdas, the first one
+   *  containing the generator for the previous sequence and the second
+   *  containing the acceptor for the next sequence
+   */
+  template <typename Func>
+  auto pipe(const Func &f) const {
+    Function f_prev(f_);
+    return [f_prev, f](const auto &f_next){ f(f_prev, f_next); };
+  }
 
-  auto eval() {
-    auto res = std::make_shared<std::vector<decltype(*begin_)>>();
-    for (const auto &val : *this) {
-      res->emplace_back(val);
-    }
+  auto get() const {
+    std::vector<value_type> res;
+    apply([&res](const auto &x){ res.emplace_back(x); return true; });
+    return res;
+  }
 
-    return seq<decltype(res->begin())>(res->begin(), res->end(), res);
+  auto get_shared() const {
+    return std::make_shared<std::vector<value_type>>(this->get());
+  }
+
+  auto eval() const {
+    auto res = this->get_shared();
+    return seq<seq_iter_type, value_type>(
+        seq_iter_type(res->begin(), res->end()), res);
   }
 
   template <typename Func>
-  auto flat_map(Func f) const {
-    return seq<impl::flat_map_iterator<Iter, Func>, Data>(
-        impl::flat_map_iterator<Iter, Func>(begin_, end_, f),
-        impl::flat_map_iterator<Iter, Func>(end_, end_, f), data_);
+  auto map(const Func &f) const {
+    auto lambda = pipe([f](const auto &f_prev, const auto &f_next) {
+        f_prev([&f_next, &f](const auto &x){
+            return f_next(f(x));
+        });
+    });
+
+    return seq<decltype(lambda),
+               decltype(f(*(value_type*)(0))), Data>(lambda, data_);
   }
 
   template <typename Func>
-  auto map(Func f) const {
-    return seq<impl::map_iterator<Iter, Func>, Data>(
-        impl::map_iterator<Iter, Func>(begin_, f),
-        impl::map_iterator<Iter, Func>(end_, f), data_);
+  auto flat_map(const Func &f) const {
+    auto lambda = pipe([f](const auto &f_prev, const auto &f_next) {
+        f_prev([&f_next, &f](const auto &x){
+            bool do_continue = true;
+            x.apply([&f_next, &f, &do_continue](const auto &x) {
+                do_continue = f_next(f(x));
+                return do_continue;
+            });
+            return do_continue;
+        });
+    });
+
+    using value_value_type = typename value_type::value_type;
+    return seq<decltype(lambda),
+               decltype(f(*(value_value_type*)(0))), Data>(lambda, data_);
+  }
+
+  template <typename Func>
+  auto filter(const Func &f) const {
+    auto lambda = pipe([f](const auto &f_prev, const auto &f_next) {
+        f_prev([&f_next, &f](const auto &x){
+            if (f(x)) {
+              return f_next(x);
+            } else {
+              return true;
+            }
+        });
+    });
+
+    return seq<decltype(lambda), value_type, Data>(lambda, data_);
   }
 
   template <typename T, typename Func>
-  T reduce(T init, Func f) const {
-    for (const auto &val : *this) {
-      init = f(init, val);
-    }
+  T reduce(T init, const Func &f) const {
+    apply([&init, &f](const auto &x){ init = f(init, x); return true; });
+
     return init;
-  }
-
-  template <typename Func>
-  auto max(Func cmp) const {
-    ftl::optional<value_type> max_val;
-    for (auto it = begin_; it != end_; ++it) {
-      if (!max_val || cmp(*max_val, *it)) {
-        max_val = *it;
-      }
-    }
-    return max_val;
-  }
-
-  template <typename T=value_type>
-  typename std::enable_if<impl::lt_exists<T>::value, ftl::optional<T>>::type
-  max() const {
-    return max([](const T &x, const T &y){ return x < y; });
   }
 
   template <typename T=value_type>
   typename std::enable_if<impl::plus_exists<T>::value, T>::type
-  sum() const {
-    return reduce(T(), [](const T &acc, const value_type &x){
+  sum(const T& init=T()) const {
+    return reduce(init, [](const T &acc, const value_type &x){
         return acc + static_cast<T>(x);
     });
   }
 
   template <typename Func>
-  auto filter(Func f) const {
-    return seq<impl::filter_iterator<Iter, Func>, Data>(
-        impl::filter_iterator<Iter, Func>(begin_, end_, f),
-        impl::filter_iterator<Iter, Func>(end_, end_, f), data_);
+  ftl::optional<value_type> max(const Func &cmp) const {
+    ftl::optional<value_type> res;
+    apply([&res, &cmp](const auto &x){
+      if (!res || cmp(*res, x)) {
+        res = ftl::optional<value_type>(x);
+      }
+      return true;
+    });
+    return res;
+  }
+
+  template <typename T=value_type>
+  typename std::enable_if<impl::lt_exists<T>::value, ftl::optional<T>>::type
+  max() const {
+    return max([](const T &x, const T &y) { return x < y; });
   }
 
   template <typename Func>
-  auto sorted(Func cmp) const {
-    auto res = std::make_shared<std::vector<typename Iter::value_type>>();
-    *res = std::vector<typename Iter::value_type>(begin_, end_);
-    std::sort(res->begin(), res->end(), cmp);
-    return seq<Iter>(res->begin(), res->end(), res);
+  auto take_while(const Func &f) const {
+    auto lambda = pipe([f](const auto &f_prev, const auto &f_next) {
+        f_prev([&f_next, &f](const auto &x){
+            if (f(x)) {
+              return f_next(x);
+            } else {
+              return false;
+            }
+        });
+    });
+
+    return seq<decltype(lambda), value_type, Data>(lambda, data_);
   }
 
-  template <typename T=Iter>
-  typename std::enable_if<impl::lt_exists<typename T::value_type>::value,
-                          seq<Iter>>::type
+  auto take(const size_t num) {
+    auto lambda = pipe([num](const auto &f_prev, const auto &f_next) {
+        size_t idx = 0;
+        f_prev([&f_next, &idx, num](const auto &x) {
+            if (idx < num) {
+              ++idx;
+              return f_next(x);
+            } else {
+              return false;
+            }
+        });
+    });
+
+    return seq<decltype(lambda), value_type, Data>(lambda, data_);
+  }
+
+  template <typename Func>
+  auto sorted(const Func &cmp) const {
+    auto res = this->get_shared();
+    std::sort(res->begin(), res->end(), cmp);
+    return seq<seq_iter_type, value_type>(
+        seq_iter_type(res->begin(), res->end()), res);
+  }
+
+  template <typename T=Value>
+  typename std::enable_if<
+      impl::lt_exists<T>::value,
+      seq<impl::seq_iter<typename std::vector<value_type>::iterator>,
+          value_type>>::type
   sorted() const {
     return sorted([](const auto &x, const auto &y) { return x < y; });
   }
 
-  template <typename Res=std::vector<typename Iter::value_type>>
-  auto split(const typename Iter::value_type &separator) const {
-    return seq<impl::split_iterator<Iter, Res>, Data>(
-        impl::split_iterator<Iter, Res>(begin_, end_, separator),
-        impl::split_iterator<Iter, Res>(end_, end_, separator), data_);
-  }
+  /* Note: Result must conform to a standard container interface
+   */
+  template <typename Result=std::vector<value_type>>
+  auto split(const value_type &separator) const {
+    auto lambda = pipe([separator](const auto &f_prev, const auto &f_next) {
+        Result result;
+        bool do_continue = false;
+        f_prev([&f_next, &separator, &result, &do_continue](const auto &x) {
+            do_continue = true;
+            if (x == separator) {
+              do_continue = f_next(result);
+              result.clear();
+            } else {
+              result.push_back(x);
+            }
+            return do_continue;
+        });
 
-  template <typename Func>
-  auto take_while(const Func &f) {
-    return seq<impl::take_while_iterator<Iter, Func>, Data>(
-        impl::take_while_iterator<Iter, Func>(begin_, false, f),
-        impl::take_while_iterator<Iter, Func>(end_, true, f), data_);
-  }
+        if (do_continue) {
+          f_next(result);
+        }
+    });
 
-  auto take(size_t num) {
-    return seq<impl::take_iterator<Iter>, Data>(
-        impl::take_iterator<Iter>(begin_, 0),
-        impl::take_iterator<Iter>(end_, num), data_);
+    return seq<decltype(lambda), Result, Data>(lambda, data_);
   }
 
   ftl::optional<value_type> head() const {
-    if (!empty()) {
-      return *begin_;
-    } else {
-      return ftl::optional<value_type>();
-    }
+    ftl::optional<value_type> h;
+    apply([&h](const auto &x){ h = ftl::make_optional(x); return false; });
+    return h;
   }
 
   ftl::optional<value_type> tail() const {
-    for (auto it = begin_;;) {
-      Iter last_it(it);
-      ++it;
-      if (it == end_) {
-          return *last_it;
-      }
-    }
-    return ftl::optional<value_type>();
+    ftl::optional<value_type> t;
+    apply([&t](const auto &x){ t = ftl::make_optional(x); return true; });
+    return t;
   }
 
   template <typename Func>
   bool any(const Func &f) const {
-    for (const auto &val : *this) {
-      if (f(val)) {
-        return true;
-      }
-    }
-    return false;
+    bool test = false;
+    apply([&test, &f](const auto &x) {
+        if (f(x)) {
+          test = true;
+          return false;
+        } else {
+          return true;
+        }
+    });
+    return test;
   }
 
-  template <typename T=typename Iter::value_type>
+  template <typename T=value_type>
   typename std::enable_if<impl::bool_exists<T>::value, bool>::type
   any() const {
     return any([](const T &x) { return static_cast<bool>(x); });
@@ -332,30 +269,34 @@ public:
 
   template <typename Func>
   bool all(const Func &f) const {
-    for (const auto &val : *this) {
-      if (!f(val)) {
-        return false;
-      }
-    }
-    return true;
+    bool test = true;
+    apply([&test, &f](const auto &x) {
+        if (!f(x)) {
+          test = false;
+          return false;
+        } else {
+          return true;
+        }
+    });
+    return test;
   }
 
-  template <typename T=typename Iter::value_type>
+  template <typename T=value_type>
   typename std::enable_if<impl::bool_exists<T>::value, bool>::type
   all() const {
     return all([](const T &x) { return static_cast<bool>(x); });
   }
 
 private:
-  Iter begin_;
-  Iter end_;
+  Function f_;
 
   std::shared_ptr<const Data> data_;
 };
 
 template <typename Iter>
-seq<Iter> make_seq(const Iter begin, const Iter end) {
-  return seq<Iter>(begin, end);
+auto make_seq(const Iter &begin, const Iter &end) {
+  return seq<impl::seq_iter<Iter>, typename Iter::value_type>(
+      impl::seq_iter<Iter>(begin, end));
 }
 
 }  // namespace ftl
