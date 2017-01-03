@@ -6,14 +6,14 @@
 
 class SeqIntTest : public ::testing::Test {
 public:
-  SeqIntTest() : a({1, 2, 3}) { }
+  SeqIntTest() : a({1, 2, 3}), s(ftl::make_seq(a.begin(), a.end())) { }
 
-  std::vector<int> a;
+  const std::vector<int> a;
+  ftl::seq<ftl::impl::seq_iter<std::vector<int>::const_iterator>, int> s;
 };
 
 TEST_F(SeqIntTest, Map) {
-  let res = ftl::make_seq(a.begin(), a.end())
-      .map([](let x){ return x * x; }).get();
+  let res = s.map([](let x){ return x * x; }).get();
 
   auto it  = res.begin();
   EXPECT_EQ(*it, 1);
@@ -25,34 +25,31 @@ TEST_F(SeqIntTest, Map) {
   EXPECT_EQ(it, res.end());
 }
 
-// TEST_F(SeqIntTest, FlatMap) {
-//   let res = s.map([](let a){
-//       return ftl::range(a, 4).map([a](let b){
-//           return std::make_tuple(a, b);
-//       });
-//   })
-//   .flat_map([](let x){ return std::get<0>(x) * std::get<1>(x); })
-//   .sum();
-// 
-//    EXPECT_EQ(res, 25);
-// }
+TEST_F(SeqIntTest, FlatMap) {
+  let res = s.map([this](let a){
+      return s.map([a](let b){
+          return std::make_tuple(a, b);
+      });
+  })
+  .flat_map([](let x){ return std::get<0>(x) * std::get<1>(x); })
+  .sum();
+
+   EXPECT_EQ(res, 36);
+}
 
 TEST_F(SeqIntTest, Reduce) {
-  let acc = ftl::make_seq(a.begin(), a.end())
-      .reduce(0, [](let acc, let x) { return acc + x; });
+  let acc = s.reduce(0, [](let acc, let x) { return acc + x; });
   EXPECT_EQ(acc, 6);
 }
 
 TEST_F(SeqIntTest, MapReduce) {
-  let res = ftl::make_seq(a.begin(), a.end())
-      .map([](let x){ return x * x;})
+  let res = s.map([](let x){ return x * x;})
       .reduce(0, [](let acc, let x) { return acc + x;});
   EXPECT_EQ(res, 14);
 }
 
 TEST_F(SeqIntTest, Filter) {
-  let res = ftl::make_seq(a.begin(), a.end())
-      .filter([](let x) { return x > 1; }).get();
+  let res = s.filter([](let x) { return x > 1; }).get();
 
   auto it = res.begin();
   EXPECT_EQ(*it, 2);
@@ -61,7 +58,7 @@ TEST_F(SeqIntTest, Filter) {
   ++it;
   EXPECT_EQ(it, res.end());
 }
-/*
+
 TEST_F(SeqIntTest, MaxValue) {
   let max_el = s.max();
   EXPECT_EQ(*max_el, 3);
@@ -75,7 +72,7 @@ TEST_F(SeqIntTest, MaxValueFunctor) {
 }
 
 TEST_F(SeqIntTest, Sorted) {
-  let res = s.sorted();
+  let res = s.sorted().get();
 
   auto it = res.begin();
   EXPECT_EQ(*it, 1);
@@ -88,7 +85,7 @@ TEST_F(SeqIntTest, Sorted) {
 }
 
 TEST_F(SeqIntTest, SortedReverse) {
-  let res = s.sorted([](let x, let y){ return x > y; });
+  let res = s.sorted([](let x, let y){ return x > y; }).get();
 
   auto it = res.begin();
   EXPECT_EQ(*it, 3);
@@ -98,86 +95,43 @@ TEST_F(SeqIntTest, SortedReverse) {
   EXPECT_EQ(*it, 1);
   ++it;
   EXPECT_EQ(it, res.end());
-}
-
-TEST_F(SeqIntTest, LazyMap) {
-  let res = s.map([](let x){ return x * x;});
-
-  auto it = res.begin();
-  EXPECT_EQ(*it, 1);
-  ++it;
-  EXPECT_EQ(*it, 4);
-  ++it;
-  EXPECT_EQ(*it, 9);
-  ++it;
-  EXPECT_EQ(it, res.end());
-}
-
-TEST_F(SeqIntTest, LazyFilter) {
-  let res = s.filter([](let x) { return x > 1; });
-
-  auto it = res.begin();
-  EXPECT_EQ(*it, 2);
-  ++it;
-  EXPECT_EQ(*it, 3);
-  ++it;
-  EXPECT_EQ(it, res.end());
-}
-
-TEST_F(SeqIntTest, LazyMapReduce) {
-  let res = s.map([](let x){ return x * x;})
-      .reduce(0, [](let acc, let x) { return acc + x;});
-  EXPECT_EQ(res, 14);
-}
-
-TEST_F(SeqIntTest, LazyMapFilterReduce) {
-  let res = s.map([](let x){ return x * x;})
-      .filter([](let x){ return x > 1; })
-      .reduce(0, [](let acc, let x) { return acc + x;});
-  EXPECT_EQ(res, 13);
 }
 
 TEST_F(SeqIntTest, TakeWhile) {
   let res = s.take_while([](let x){ return x < 3; }).sum();
   EXPECT_EQ(res, 3);
 }
-*/
+
 TEST_F(SeqIntTest, Tail) {
-  let s = ftl::make_seq(a.begin(), a.end());
   let res = s.tail();
   EXPECT_EQ(*res, 3);
 }
 
 TEST_F(SeqIntTest, Head) {
-  let s = ftl::make_seq(a.begin(), a.end());
   let res = s.head();
   EXPECT_EQ(*res, 1);
 }
 
 TEST_F(SeqIntTest, AnyTrue) {
-  let s = ftl::make_seq(a.begin(), a.end());
   let res = s.map([](let x){ return x == 2; }).any();
   EXPECT_EQ(res, true);
 }
 
 TEST_F(SeqIntTest, AnyFalse) {
-  let s = ftl::make_seq(a.begin(), a.end());
   let res = s.map([](let x){ return x == 4; }).any();
   EXPECT_EQ(res, false);
 }
 
 TEST_F(SeqIntTest, AllTrue) {
-  let s = ftl::make_seq(a.begin(), a.end());
   let res = s.map([](let x){ return x > 0; }).all();
   EXPECT_EQ(res, true);
 }
 
 TEST_F(SeqIntTest, AllFalse) {
-  let s = ftl::make_seq(a.begin(), a.end());
   let res = s.map([](let x){ return x == 2; }).all();
   EXPECT_EQ(res, false);
 }
-/*
+
 //----------------------------------------------------------------------------//
 
 class SeqStringTest : public ::testing::Test {
@@ -186,12 +140,13 @@ public:
     : a({"aaa", "bb", "c"}),
       s(ftl::make_seq(a.begin(), a.end())) { }
 
-  std::vector<std::string> a;
-  ftl::seq<std::vector<std::string>::iterator> s;
+  const std::vector<std::string> a;
+  ftl::seq<ftl::impl::seq_iter<std::vector<std::string>::const_iterator>,
+           std::string> s;
 };
 
 TEST_F(SeqStringTest, Map) {
-  let res = s.map([](let x){ return x + x;}).eval();
+  let res = s.map([](let x){ return x + x;}).get();
 
   auto it  = res.begin();
   EXPECT_EQ(*it, "aaaaaa");
@@ -204,16 +159,16 @@ TEST_F(SeqStringTest, Map) {
 }
 
 TEST_F(SeqStringTest, FlatMap) {
-  let res = s.map([](let a){
+  let res = s.map([this](let a){
       let size = static_cast<int>(a.size());
-      return ftl::range(size, 4).map([size](let b){
-          return std::make_tuple(size, b);
+      return s.map([size](let b){
+          return std::make_tuple(size, b.size());
       });
   })
   .flat_map([](let x){ return std::get<0>(x) * std::get<1>(x); })
   .sum();
 
-   EXPECT_EQ(res, 25);
+   EXPECT_EQ(res, 36);
 }
 
 TEST_F(SeqStringTest, Reduce) {
@@ -228,7 +183,7 @@ TEST_F(SeqStringTest, MapReduce) {
 }
 
 TEST_F(SeqStringTest, Filter) {
-  let res = s.filter([](let x) { return x.size() > 1; }).eval();
+  let res = s.filter([](let x) { return x.size() > 1; }).get();
 
   auto it = res.begin();
   EXPECT_EQ(*it, "aaa");
@@ -246,7 +201,7 @@ TEST_F(SeqStringTest, MaxValueFunctor) {
 }
 
 TEST_F(SeqStringTest, Sorted) {
-  let res = s.sorted();
+  let res = s.sorted().get();
 
   auto it = res.begin();
   EXPECT_EQ(*it, "aaa");
@@ -259,7 +214,7 @@ TEST_F(SeqStringTest, Sorted) {
 }
 
 TEST_F(SeqStringTest, SortedReverse) {
-  let res = s.sorted([](let x, let y){ return x > y; });
+  let res = s.sorted([](let x, let y){ return x > y; }).get();
 
   auto it = res.begin();
   EXPECT_EQ(*it, "c");
@@ -269,43 +224,6 @@ TEST_F(SeqStringTest, SortedReverse) {
   EXPECT_EQ(*it, "aaa");
   ++it;
   EXPECT_EQ(it, res.end());
-}
-
-TEST_F(SeqStringTest, LazyMap) {
-  let res = s.map([](let x){ return x + x;});
-
-  auto it = res.begin();
-  EXPECT_EQ(*it, "aaaaaa");
-  ++it;
-  EXPECT_EQ(*it, "bbbb");
-  ++it;
-  EXPECT_EQ(*it, "cc");
-  ++it;
-  EXPECT_EQ(it, res.end());
-}
-
-TEST_F(SeqStringTest, LazyFilter) {
-  let res = s.filter([](let x) { return x.size() > 1; });
-
-  auto it = res.begin();
-  EXPECT_EQ(*it, "aaa");
-  ++it;
-  EXPECT_EQ(*it, "bb");
-  ++it;
-  EXPECT_EQ(it, res.end());
-}
-
-TEST_F(SeqStringTest, LazyMapReduce) {
-  let res = s.map([](let x){ return x + x; })
-      .reduce(std::string(), [](let acc, let x) { return acc + x; });
-  EXPECT_EQ(res, "aaaaaabbbbcc");
-}
-
-TEST_F(SeqStringTest, LazyMapFilterReduce) {
-  let res = s.map([](let x){ return x + x; })
-      .filter([](let x){ return x.size() != 4; })
-      .reduce(std::string(), [](let acc, let x) { return acc + x; });
-  EXPECT_EQ(res, "aaaaaacc");
 }
 
 TEST_F(SeqStringTest, TakeWhile) {
@@ -349,14 +267,14 @@ class SeqNoOpsTest : public ::testing::Test {
 public:
   struct NoOps { int val; };
 
-  SeqNoOpsTest() : a({{1}, {2}, {3}}), s(a.begin(), a.end()) { }
+  SeqNoOpsTest() : a({{1}, {2}, {3}}) { }
 
   const std::vector<NoOps> a;
-  ftl::seq<typename std::vector<const NoOps>::iterator> s;
 };
 
 TEST_F(SeqNoOpsTest, Sorted) {
-  let res = s.sorted([](auto x, auto y){ return x.val < y.val; });
+  let s = ftl::make_seq(a.begin(), a.end());
+  let res = s.sorted([](auto x, auto y){ return x.val < y.val; }).get();
 
   auto it = res.begin();
   EXPECT_EQ(it->val, 1);
@@ -372,16 +290,16 @@ TEST_F(SeqNoOpsTest, Sorted) {
 
 class StringTest : public ::testing::Test {
 public:
-  StringTest()
-    : a("the quick brown fox, jumps over the lazy dog"),
-      s(ftl::make_seq(a.begin(), a.end())) { }
+  StringTest() : a("the quick brown fox, jumps over the lazy dog"),
+                 s(ftl::make_seq(a.begin(), a.end())) { }
 
   const std::string a;
-  const ftl::seq<std::string::const_iterator> s;
+  ftl::seq<ftl::impl::seq_iter<std::string::const_iterator>, char> s;
 };
 
 TEST_F(StringTest, SplitToVectorOnWhitespace) {
-  let split = s.split(' ').eval();
+  let s = ftl::make_seq(a.begin(), a.end());
+  let split = s.split(' ').get();
 
   auto it = split.begin();
   EXPECT_EQ(std::string(it->data(), it->size()), "the");
@@ -406,7 +324,8 @@ TEST_F(StringTest, SplitToVectorOnWhitespace) {
 }
 
 TEST_F(StringTest, SplitToVectorOnComma) {
-  let split = s.split(',').eval();
+  let s = ftl::make_seq(a.begin(), a.end());
+  let split = s.split(',').get();
 
   auto it = split.begin();
   EXPECT_EQ(std::string(it->data(), it->size()), "the quick brown fox");
@@ -416,19 +335,9 @@ TEST_F(StringTest, SplitToVectorOnComma) {
   EXPECT_EQ(it, split.end());
 }
 
-TEST_F(StringTest, LazySplitToVectorOnComma) {
-  let split = s.split(',');
-
-  auto it = split.begin();
-  EXPECT_EQ(std::string((*it).data(), (*it).size()), "the quick brown fox");
-  ++it;
-  EXPECT_EQ(std::string((*it).data(), (*it).size()), " jumps over the lazy dog");
-  ++it;
-  EXPECT_EQ(it, split.end());
-}
-
 TEST_F(StringTest, SplitToStringOnWhitespace) {
-  let split = s.split<std::string>(' ').eval();
+  let s = ftl::make_seq(a.begin(), a.end());
+  let split = s.split<std::string>(' ').get();
 
   auto it = split.begin();
   EXPECT_EQ(*it, "the");
@@ -453,7 +362,8 @@ TEST_F(StringTest, SplitToStringOnWhitespace) {
 }
 
 TEST_F(StringTest, SplitToStringOnComma) {
-  let split = s.split<std::string>(',').eval();
+  let s = ftl::make_seq(a.begin(), a.end());
+  let split = s.split<std::string>(',').get();
 
   auto it = split.begin();
   EXPECT_EQ(*it, "the quick brown fox");
@@ -463,14 +373,3 @@ TEST_F(StringTest, SplitToStringOnComma) {
   EXPECT_EQ(it, split.end());
 }
 
-TEST_F(StringTest, LazySplitToStringOnComma) {
-  let split = s.split<std::string>(',');
-
-  auto it = split.begin();
-  EXPECT_EQ(*it, "the quick brown fox");
-  ++it;
-  EXPECT_EQ(*it,  " jumps over the lazy dog");
-  ++it;
-  EXPECT_EQ(it, split.end());
-}
-*/
