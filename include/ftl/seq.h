@@ -94,10 +94,10 @@ public:
         });
     };
 
+    using value_value_type = typename value_type::value_type;
     return seq<decltype(lambda),
-               decltype(f(*(typename value_type::value_type*)(0))), Data>(lambda, data_);
+               decltype(f(*(value_value_type*)(0))), Data>(lambda, data_);
   }
-
 
   template <typename Func>
   auto filter(Func f) const {
