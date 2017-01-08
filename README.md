@@ -53,10 +53,6 @@ void line_count() {
   let num_lines = ftl::read(f).count();
 }
 
-void word_count() {
-  std::ifstream f("text.txt");
-  let num_words = ftl::read(f).split(' ').count();
-}
 ```
 
 ### Usage
