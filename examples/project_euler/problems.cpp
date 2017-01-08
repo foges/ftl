@@ -202,6 +202,29 @@ uint64_t problem23() {
       .sum();
 }
 
+// Find the sum of all the numbers that can be written as the sum of fifth
+// powers of their digits.
+uint32_t problem30() {
+  let fifth_power = ftl::range(0, 11)
+      .map([](let x) { let xx = x * x; return xx * xx * x; })
+      .get();
+
+  let is_sum_of_fifth_power = [&fifth_power](let x) {
+    let d5 = x / 10'000;
+    let d4 = (x - d5 * 10'000) / 1'000;
+    let d3 = (x - d5 * 10'000 - d4 * 1'000) / 100;
+    let d2 = (x - d5 * 10'000 - d4 * 1'000 - d3 * 100) / 10;
+    let d1 = (x - d5 * 10'000 - d4 * 1'000 - d3 * 100 - d2 * 10) / 1;
+
+    return x == (fifth_power[d5] + fifth_power[d4] + fifth_power[d3] +
+       fifth_power[d2] + fifth_power[d1]);
+  };
+
+  return ftl::range(10'000, 100'000)
+      .filter(is_sum_of_fifth_power)
+      .sum();
+}
+
 template <typename Func>
 void do_run(const std::string &name, const Func &f) {
   uint64_t t_start = timestamp_ms();
@@ -238,6 +261,7 @@ int main() {
   RUN(problem12);
   RUN(problem14);
   RUN(problem23);
+  RUN(problem30);
 
   std::cout << spacing << std::endl;
 }

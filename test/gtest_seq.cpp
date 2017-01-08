@@ -132,6 +132,162 @@ TEST_F(SeqIntTest, AllFalse) {
   EXPECT_EQ(res, false);
 }
 
+TEST_F(SeqIntTest, WithIndex) {
+  let res = s.with_index().get();
+
+  auto it  = res.begin();
+  EXPECT_EQ(*it, std::make_tuple(0, 1));
+  ++it;
+  EXPECT_EQ(*it, std::make_tuple(1, 2));
+  ++it;
+  EXPECT_EQ(*it, std::make_tuple(2, 3));
+  ++it;
+  EXPECT_EQ(it, res.end());
+}
+
+TEST_F(SeqIntTest, Reverse) {
+  let res = s.reverse().get();
+
+  auto it  = res.begin();
+  EXPECT_EQ(*it, 3);
+  ++it;
+  EXPECT_EQ(*it, 2);
+  ++it;
+  EXPECT_EQ(*it, 1);
+  ++it;
+  EXPECT_EQ(it, res.end());
+}
+
+TEST_F(SeqIntTest, Scan) {
+  let res = s.scan([](let &x, let &acc){ return acc + x; }).get();
+
+  auto it  = res.begin();
+  EXPECT_EQ(*it, 1);
+  ++it;
+  EXPECT_EQ(*it, 3);
+  ++it;
+  EXPECT_EQ(*it, 6);
+  ++it;
+  EXPECT_EQ(it, res.end());
+}
+
+TEST_F(SeqIntTest, ScanAcc) {
+  let res = s.scan(-6, [](let &x, let &acc){ return acc + x; }).get();
+
+  auto it  = res.begin();
+  EXPECT_EQ(*it, -5);
+  ++it;
+  EXPECT_EQ(*it, -3);
+  ++it;
+  EXPECT_EQ(*it, 0);
+  ++it;
+  EXPECT_EQ(it, res.end());
+}
+
+TEST_F(SeqIntTest, DropOne) {
+  let res = s.drop(1).get();
+
+  auto it  = res.begin();
+  EXPECT_EQ(*it, 2);
+  ++it;
+  EXPECT_EQ(*it, 3);
+  ++it;
+  EXPECT_EQ(it, res.end());
+}
+
+TEST_F(SeqIntTest, DropTwo) {
+  let res = s.drop(2).get();
+
+  auto it  = res.begin();
+  EXPECT_EQ(*it, 3);
+  ++it;
+  EXPECT_EQ(it, res.end());
+}
+
+TEST_F(SeqIntTest, DropEverySecond) {
+  let res = s.drop_every(2).get();
+
+  auto it  = res.begin();
+  EXPECT_EQ(*it, 1);
+  ++it;
+  EXPECT_EQ(*it, 3);
+  ++it;
+  EXPECT_EQ(it, res.end());
+}
+
+TEST_F(SeqIntTest, DropEveryThird) {
+  let res = s.drop_every(3).get();
+
+  auto it  = res.begin();
+  EXPECT_EQ(*it, 1);
+  ++it;
+  EXPECT_EQ(*it, 2);
+  ++it;
+  EXPECT_EQ(it, res.end());
+}
+
+TEST_F(SeqIntTest, DropWhile) {
+  let res = s.drop_while([](let x){ return x < 3; }).get();
+
+  auto it  = res.begin();
+  EXPECT_EQ(*it, 3);
+  ++it;
+  EXPECT_EQ(it, res.end());
+}
+
+TEST_F(SeqIntTest, Reject) {
+  let res = s.reject([](let &x){ return x < 2; }).get();
+
+  auto it  = res.begin();
+  EXPECT_EQ(*it, 2);
+  ++it;
+  EXPECT_EQ(*it, 3);
+  ++it;
+  EXPECT_EQ(it, res.end());
+}
+
+//----------------------------------------------------------------------------//
+
+class SeqIntRepeatTest : public ::testing::Test {
+public:
+  SeqIntRepeatTest()
+    : a({1, 1, 2, 2, 3, 3, 2, 2, 1, 1}),
+      s(ftl::make_seq(a.begin(), a.end())) { }
+
+  const std::vector<int> a;
+  ftl::seq<ftl::impl::seq_iter<std::vector<int>::const_iterator>, int> s;
+};
+
+TEST_F(SeqIntRepeatTest, Uniq) {
+  let res = s.uniq().get();
+
+  auto it  = res.begin();
+  EXPECT_EQ(*it, 1);
+  ++it;
+  EXPECT_EQ(*it, 2);
+  ++it;
+  EXPECT_EQ(*it, 3);
+  ++it;
+  EXPECT_EQ(it, res.end());
+}
+
+TEST_F(SeqIntRepeatTest, Dedup) {
+  let res = s.dedup().get();
+
+  auto it  = res.begin();
+  EXPECT_EQ(*it, 1);
+  ++it;
+  EXPECT_EQ(*it, 2);
+  ++it;
+  EXPECT_EQ(*it, 3);
+  ++it;
+  EXPECT_EQ(*it, 2);
+  ++it;
+  EXPECT_EQ(*it, 1);
+  ++it;
+  EXPECT_EQ(it, res.end());
+}
+
 //----------------------------------------------------------------------------//
 
 class SeqStringTest : public ::testing::Test {
@@ -259,6 +415,120 @@ TEST_F(SeqStringTest, AllTrue) {
 TEST_F(SeqStringTest, AllFalse) {
   let res = s.map([](let x){ return x == "aaa"; }).all();
   EXPECT_EQ(res, false);
+}
+
+TEST_F(SeqStringTest, WithIndex) {
+  let res = s.with_index().get();
+
+  auto it  = res.begin();
+  EXPECT_EQ(*it, std::make_tuple(0, "aaa"));
+  ++it;
+  EXPECT_EQ(*it, std::make_tuple(1, "bb"));
+  ++it;
+  EXPECT_EQ(*it, std::make_tuple(2, "c"));
+  ++it;
+  EXPECT_EQ(it, res.end());
+}
+
+TEST_F(SeqStringTest, Reverse) {
+  let res = s.reverse().get();
+
+  auto it  = res.begin();
+  EXPECT_EQ(*it, "c");
+  ++it;
+  EXPECT_EQ(*it, "bb");
+  ++it;
+  EXPECT_EQ(*it, "aaa");
+  ++it;
+  EXPECT_EQ(it, res.end());
+}
+
+TEST_F(SeqStringTest, Scan) {
+  let res = s.scan([](let &x, let &acc){ return acc + x; }).get();
+
+  auto it  = res.begin();
+  EXPECT_EQ(*it, "aaa");
+  ++it;
+  EXPECT_EQ(*it, "aaabb");
+  ++it;
+  EXPECT_EQ(*it, "aaabbc");
+  ++it;
+  EXPECT_EQ(it, res.end());
+}
+
+TEST_F(SeqStringTest, ScanAcc) {
+  let res = s.scan("z", [](let &x, let &acc){ return acc + x; }).get();
+
+  auto it  = res.begin();
+  EXPECT_EQ(*it, "zaaa");
+  ++it;
+  EXPECT_EQ(*it, "zaaabb");
+  ++it;
+  EXPECT_EQ(*it, "zaaabbc");
+  ++it;
+  EXPECT_EQ(it, res.end());
+}
+
+TEST_F(SeqStringTest, DropOne) {
+  let res = s.drop(1).get();
+
+  auto it  = res.begin();
+  EXPECT_EQ(*it, "bb");
+  ++it;
+  EXPECT_EQ(*it, "c");
+  ++it;
+  EXPECT_EQ(it, res.end());
+}
+
+TEST_F(SeqStringTest, DropTwo) {
+  let res = s.drop(2).get();
+
+  auto it  = res.begin();
+  EXPECT_EQ(*it, "c");
+  ++it;
+  EXPECT_EQ(it, res.end());
+}
+
+TEST_F(SeqStringTest, DropEverySecond) {
+  let res = s.drop_every(2).get();
+
+  auto it  = res.begin();
+  EXPECT_EQ(*it, "aaa");
+  ++it;
+  EXPECT_EQ(*it, "c");
+  ++it;
+  EXPECT_EQ(it, res.end());
+}
+
+TEST_F(SeqStringTest, DropEveryThird) {
+  let res = s.drop_every(3).get();
+
+  auto it  = res.begin();
+  EXPECT_EQ(*it, "aaa");
+  ++it;
+  EXPECT_EQ(*it, "bb");
+  ++it;
+  EXPECT_EQ(it, res.end());
+}
+
+TEST_F(SeqStringTest, DropWhile) {
+  let res = s.drop_while([](let x){ return x.size() > 1; }).get();
+
+  auto it  = res.begin();
+  EXPECT_EQ(*it, "c");
+  ++it;
+  EXPECT_EQ(it, res.end());
+}
+
+TEST_F(SeqStringTest, Reject) {
+  let res = s.reject([](let &x){ return x.size() < 2; }).get();
+
+  auto it  = res.begin();
+  EXPECT_EQ(*it, "aaa");
+  ++it;
+  EXPECT_EQ(*it, "bb");
+  ++it;
+  EXPECT_EQ(it, res.end());
 }
 
 //------------------------------------------------------------------------------

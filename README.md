@@ -30,8 +30,8 @@ Other classes of interestes are:
 
 ### Examples
 
-Take a look at the `examples` folder for some great ways to use ftl. Here is
-one example:
+Take a look at the `examples` folder for some great ways to use ftl. Here are
+a couple of example:
 
 ``` c++
 #include <assert.h>
@@ -39,13 +39,23 @@ one example:
 
 #include <ftl/ftl.h>
 
-int main() {
+void map_filter_reduce() {
   let a = std::vector<int>{1, 2, 3};
   let res = ftl::make_seq(a.begin(), a.end())
       .map([](let x){ return x * x; })
       .filter([](let x){ return x > 1; })
       .reduce(0, [](let acc, let x) { return acc + x; });
   assert(res == 13);
+}
+
+void line_count() {
+  std::ifstream f("text.txt");
+  let num_lines = ftl::read(f).count();
+}
+
+void word_count() {
+  std::ifstream f("text.txt");
+  let num_words = ftl::read(f).split(' ').count();
 }
 ```
 

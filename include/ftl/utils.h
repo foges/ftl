@@ -3,6 +3,9 @@
 namespace ftl {
 namespace impl {
 
+template <typename T>
+decltype(*(T*)(0)) instance_of();
+
 struct nil { };
 
 template <typename T>
@@ -14,14 +17,16 @@ impl::nil operator+(const T&, const T&);
 template <typename T>
 struct lt_exists {
   enum {
-    value = !std::is_same<decltype(*(T*)(0) < *(T*)(0)), nil>::value
+    value = !std::is_same<decltype(instance_of<T>() < instance_of<T>()),
+                          nil>::value
   };
 };
 
 template <typename T>
 struct plus_exists {
   enum {
-    value = !std::is_same<decltype(*(T*)(0) + *(T*)(0)), nil>::value
+    value = !std::is_same<decltype(instance_of<T>() + instance_of<T>()),
+                          nil>::value
   };
 };
 

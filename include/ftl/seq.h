@@ -3,7 +3,9 @@
 #include <algorithm>
 #include <memory>
 #include <vector>
+#include <set>
 
+#include <ftl/functors.h>
 #include <ftl/optional.h>
 #include <ftl/utils.h>
 
@@ -83,34 +85,127 @@ public:
         seq_iter_type(res->begin(), res->end()), res);
   }
 
-  template <typename Func>
-  auto map(const Func &f) const {
-    auto lambda = pipe([f](const auto &f_prev, const auto &f_next) {
-        f_prev([&f_next, &f](const auto &x){
-            return f_next(f(x));
-        });
-    });
+  // Implementations
 
-    return seq<decltype(lambda),
-               decltype(f(*(value_type*)(0))), Data>(lambda, data_);
+  template <typename Func>
+  bool all(const Func &f) const {
+    bool test = true;
+    apply([&test, &f](const auto &x) {
+        if (!f(x)) {
+          test = false;
+          return false;
+        } else {
+          return true;
+        }
+    });
+    return test;
+  }
+
+  template <typename T=value_type>
+  typename std::enable_if<impl::bool_exists<T>::value, bool>::type
+  all() const {
+    return all([](const T &x) { return static_cast<bool>(x); });
   }
 
   template <typename Func>
-  auto flat_map(const Func &f) const {
+  bool any(const Func &f) const {
+    bool test = false;
+    apply([&test, &f](const auto &x) {
+        if (f(x)) {
+          test = true;
+          return false;
+        } else {
+          return true;
+        }
+    });
+    return test;
+  }
+
+  template <typename T=value_type>
+  typename std::enable_if<impl::bool_exists<T>::value, bool>::type
+  any() const {
+    return any([](const T &x) { return static_cast<bool>(x); });
+  }
+
+  template <typename Func>
+  size_t count(const Func &f) const {
+    size_t num = 0;;
+    apply([&num, &f](const auto &x){ if (f(x)) { num += 1; }; return true; });
+    return num;
+  }
+
+  size_t count() const {
+    return count([](const auto&){ return true; });
+  }
+
+  template <typename Func>
+  auto dedup(const Func &f) const {
     auto lambda = pipe([f](const auto &f_prev, const auto &f_next) {
-        f_prev([&f_next, &f](const auto &x){
-            bool do_continue = true;
-            x.apply([&f_next, &f, &do_continue](const auto &x) {
-                do_continue = f_next(f(x));
-                return do_continue;
-            });
-            return do_continue;
+        optional<decltype(f(impl::instance_of<value_type>()))> last;
+        f_prev([&f_next, &f, &last](const auto &x){
+            const auto fx = f(x);
+            if (!last || *last != fx) {
+              last = make_optional(fx);
+              return f_next(x);
+            }
+            return true;
         });
     });
 
-    using value_value_type = typename value_type::value_type;
-    return seq<decltype(lambda),
-               decltype(f(*(value_value_type*)(0))), Data>(lambda, data_);
+    return seq<decltype(lambda), value_type>(lambda, data_);
+  }
+
+  auto dedup() const {
+    return dedup(identity());
+  }
+
+  auto drop(size_t num) const {
+    auto lambda = pipe([num](const auto &f_prev, const auto &f_next) {
+        size_t idx = 0;
+        f_prev([&f_next, num, &idx](const auto &x){
+            ++idx;
+            if (idx <= num) {
+              return true;
+            } else {
+              return f_next(x);
+            }
+        });
+    });
+
+    return seq<decltype(lambda), value_type, Data>(lambda, data_);
+  }
+
+  auto drop_every(size_t num) const {
+    auto lambda = pipe([num](const auto &f_prev, const auto &f_next) {
+        size_t idx = 0;
+        f_prev([&f_next, num, &idx](const auto &x){
+            idx++;
+            if (idx % num == 0) {
+              return true;
+            } else {
+              return f_next(x);
+            }
+        });
+    });
+
+    return seq<decltype(lambda), value_type, Data>(lambda, data_);
+  }
+
+  template <typename Func>
+  auto drop_while(const Func &f) const {
+    auto lambda = pipe([f](const auto &f_prev, const auto &f_next) {
+        bool do_drop = true;
+        f_prev([&f_next, &do_drop, &f](const auto &x){
+            do_drop = do_drop && f(x);
+            if (do_drop) {
+              return true;
+            } else {
+              return f_next(x);
+            }
+        });
+    });
+
+    return seq<decltype(lambda), value_type, Data>(lambda, data_);
   }
 
   template <typename Func>
@@ -128,19 +223,39 @@ public:
     return seq<decltype(lambda), value_type, Data>(lambda, data_);
   }
 
-  template <typename T, typename Func>
-  T reduce(T init, const Func &f) const {
-    apply([&init, &f](const auto &x){ init = f(init, x); return true; });
+  template <typename Func>
+  auto flat_map(const Func &f) const {
+    auto lambda = pipe([f](const auto &f_prev, const auto &f_next) {
+        f_prev([&f_next, &f](const auto &x){
+            bool do_continue = true;
+            x.apply([&f_next, &f, &do_continue](const auto &x) {
+                do_continue = f_next(f(x));
+                return do_continue;
+            });
+            return do_continue;
+        });
+    });
 
-    return init;
+    using result_type = decltype(f(*(typename value_type::value_type*)(0)));
+    return seq<decltype(lambda), result_type, Data>(lambda, data_);
   }
 
-  template <typename T=value_type>
-  typename std::enable_if<impl::plus_exists<T>::value, T>::type
-  sum(const T& init=T()) const {
-    return reduce(init, [](const T &acc, const value_type &x){
-        return acc + static_cast<T>(x);
+  ftl::optional<value_type> head() const {
+    ftl::optional<value_type> h;
+    apply([&h](const auto &x){ h = ftl::make_optional(x); return false; });
+    return h;
+  }
+
+  template <typename Func>
+  auto map(const Func &f) const {
+    auto lambda = pipe([f](const auto &f_prev, const auto &f_next) {
+        f_prev([&f_next, &f](const auto &x){
+            return f_next(f(x));
+        });
     });
+
+    return seq<decltype(lambda),
+               decltype(f(*(value_type*)(0))), Data>(lambda, data_);
   }
 
   template <typename Func>
@@ -161,36 +276,59 @@ public:
     return max([](const T &x, const T &y) { return x < y; });
   }
 
+  template <typename T, typename Func>
+  T reduce(T init, const Func &f) const {
+    apply([&init, &f](const auto &x){ init = f(init, x); return true; });
+
+    return init;
+  }
+
   template <typename Func>
-  auto take_while(const Func &f) const {
+  auto reject(const Func &f) const {
+    return filter([f](const auto &x){ return !f(x); });
+  }
+
+  auto reverse() const {
+    auto res = get_shared();
+    std::reverse(res->begin(), res->end());
+
+    return seq<seq_iter_type, value_type>(
+        seq_iter_type(res->begin(), res->end()), res);
+  }
+
+  template <typename Func>
+  auto scan(const Func &f) const {
+    using result_type = decltype(f(impl::instance_of<value_type>(),
+                                   impl::instance_of<value_type>()));
     auto lambda = pipe([f](const auto &f_prev, const auto &f_next) {
-        f_prev([&f_next, &f](const auto &x){
-            if (f(x)) {
-              return f_next(x);
+        optional<result_type> acc;
+        f_prev([&f_next, &f, &acc](const auto &x){
+            if (acc) {
+              acc = f(x, *acc);
             } else {
-              return false;
+              acc = x;
             }
+            return f_next(*acc);
         });
     });
 
-    return seq<decltype(lambda), value_type, Data>(lambda, data_);
+    return seq<decltype(lambda), result_type>(lambda, data_);
   }
 
-  auto take(const size_t num) {
-    auto lambda = pipe([num](const auto &f_prev, const auto &f_next) {
-        size_t idx = 0;
-        f_prev([&f_next, &idx, num](const auto &x) {
-            if (idx < num) {
-              ++idx;
-              return f_next(x);
-            } else {
-              return false;
-            }
+  template <typename T, typename Func>
+  auto scan(const T &init, const Func &f) const {
+    using result_type = decltype(f(init, impl::instance_of<value_type>()));
+    auto lambda = pipe([init, f](const auto &f_prev, const auto &f_next) {
+        result_type acc = init;
+        f_prev([&f_next, &f, &acc](const auto &x){
+            acc = f(x, acc);
+            return f_next(acc);
         });
     });
 
-    return seq<decltype(lambda), value_type, Data>(lambda, data_);
+    return seq<decltype(lambda), result_type>(lambda, data_);
   }
+
 
   template <typename Func>
   auto sorted(const Func &cmp) const {
@@ -235,10 +373,12 @@ public:
     return seq<decltype(lambda), Result, Data>(lambda, data_);
   }
 
-  ftl::optional<value_type> head() const {
-    ftl::optional<value_type> h;
-    apply([&h](const auto &x){ h = ftl::make_optional(x); return false; });
-    return h;
+  template <typename T=value_type>
+  typename std::enable_if<impl::plus_exists<T>::value, T>::type
+  sum(const T& init=T()) const {
+    return reduce(init, [](const T &acc, const value_type &x){
+        return acc + static_cast<T>(x);
+    });
   }
 
   ftl::optional<value_type> tail() const {
@@ -247,44 +387,69 @@ public:
     return t;
   }
 
-  template <typename Func>
-  bool any(const Func &f) const {
-    bool test = false;
-    apply([&test, &f](const auto &x) {
-        if (f(x)) {
-          test = true;
-          return false;
-        } else {
-          return true;
-        }
+  auto take(const size_t num) {
+    auto lambda = pipe([num](const auto &f_prev, const auto &f_next) {
+        size_t idx = 0;
+        f_prev([&f_next, &idx, num](const auto &x) {
+            if (idx < num) {
+              ++idx;
+              return f_next(x);
+            } else {
+              return false;
+            }
+        });
     });
-    return test;
-  }
 
-  template <typename T=value_type>
-  typename std::enable_if<impl::bool_exists<T>::value, bool>::type
-  any() const {
-    return any([](const T &x) { return static_cast<bool>(x); });
+    return seq<decltype(lambda), value_type, Data>(lambda, data_);
   }
 
   template <typename Func>
-  bool all(const Func &f) const {
-    bool test = true;
-    apply([&test, &f](const auto &x) {
-        if (!f(x)) {
-          test = false;
-          return false;
-        } else {
-          return true;
-        }
+  auto take_while(const Func &f) const {
+    auto lambda = pipe([f](const auto &f_prev, const auto &f_next) {
+        f_prev([&f_next, &f](const auto &x){
+            if (f(x)) {
+              return f_next(x);
+            } else {
+              return false;
+            }
+        });
     });
-    return test;
+
+    return seq<decltype(lambda), value_type, Data>(lambda, data_);
   }
 
-  template <typename T=value_type>
-  typename std::enable_if<impl::bool_exists<T>::value, bool>::type
-  all() const {
-    return all([](const T &x) { return static_cast<bool>(x); });
+  template <typename Func>
+  auto uniq(const Func &f) const {
+    auto lambda = pipe([f](const auto &f_prev, const auto &f_next) {
+        std::set<decltype(f(impl::instance_of<value_type>()))> vals;
+        f_prev([&f_next, &f, &vals](const auto &x){
+            const auto fx = f(x);
+            const auto it = vals.find(fx);
+            if (it == vals.end()) {
+              vals.insert(fx);
+              return f_next(x);
+            }
+            return true;
+        });
+    });
+
+    return seq<decltype(lambda), value_type>(lambda, data_);
+  }
+
+  auto uniq() const {
+    return uniq(identity());
+  }
+
+  auto with_index() const {
+    auto lambda = pipe([](const auto &f_prev, const auto &f_next) {
+        size_t idx = 0;
+        f_prev([&f_next, &idx](const auto &x) {
+            return f_next(std::make_tuple(idx++, x));
+        });
+    });
+
+    return seq<decltype(lambda), std::tuple<size_t, value_type>, Data>(lambda,
+        data_);
   }
 
 private:
